@@ -33,6 +33,7 @@ public class LogIn extends JFrame
 		add(new JLabel("Enter Database Password:"));
 		passwordField = new JPasswordField(15);
 		add(passwordField);
+		passwordField.addKeyListener(new enterButtonListener());
 		JButton enterLogInData = new JButton("Submit Log In Data");
 		add(enterLogInData);
 		enterLogInData.addActionListener(new enterLogInDataListener());
@@ -40,6 +41,43 @@ public class LogIn extends JFrame
 		pack();
 		centerOnScreen();
 		setVisible(true);
+	}
+	
+	// ENTER LOG IN DATA LISTENER - Activated upon push of "Enter" key when in password field
+	
+	private class enterButtonListener implements KeyListener
+	{
+		public void keyPressed(KeyEvent e)
+		{
+			if( e.getKeyCode() == KeyEvent.VK_ENTER )
+			{
+				StringBuilder sb = new StringBuilder();
+				username = usernameField.getText();
+				char pw[] = passwordField.getPassword();
+				for(int i = 0; i<pw.length; i++)
+				{
+					sb.append(pw[i]);
+				}
+				password = sb.toString();
+				try
+				{
+					String url = "jdbc:mysql://localhost/drycleaning";
+					Class.forName("com.mysql.jdbc.Driver").newInstance();
+					conn = DriverManager.getConnection(url, username, password);
+					System.out.println("Database connection established");
+					stmt = conn.createStatement();
+					new Central();
+					setVisible(false);
+				}
+				catch (Exception error) 
+				{
+					JOptionPane.showMessageDialog(null, "Failed Connection Attempt.");
+					error.printStackTrace();
+				}
+			}
+		}
+		public void keyReleased(KeyEvent e) {}
+		public void keyTyped(KeyEvent e) {}
 	}
 	
 	// ENTER LOGIN DATA LISTENER - Activated upon push of "Submit Log In Data" button
@@ -58,16 +96,18 @@ public class LogIn extends JFrame
 			password = sb.toString();
 			try
 			{
-				String url = "jdbc:mysql://localhost/MDC";
+				String url = "jdbc:mysql://localhost/drycleaning";
 				Class.forName("com.mysql.jdbc.Driver").newInstance();
 				conn = DriverManager.getConnection(url, username, password);
 				System.out.println("Database connection established");
 				stmt = conn.createStatement();
 				new Central();
+				setVisible(false);
 			}
 			catch (Exception error) 
 			{
 				JOptionPane.showMessageDialog(null, "Failed Connection Attempt.");
+				error.printStackTrace();
 			}
 		}
 	}
