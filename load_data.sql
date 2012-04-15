@@ -73,7 +73,7 @@ INSERT INTO SERVICE_DATA(ServiceDescription, Price, TimeRequired) VALUES(
     'Wash','0.50','00:50:00'
 );
 INSERT INTO SERVICE_DATA(ServiceDescription, Price, TimeRequired) VALUES(
-    'Dry clean','0.75','01:00:00'
+    'Dry Clean','0.75','01:00:00'
 );
 INSERT INTO SERVICE_DATA(ServiceDescription, Price, TimeRequired) VALUES(
     'Press','0.50','00:20:00'

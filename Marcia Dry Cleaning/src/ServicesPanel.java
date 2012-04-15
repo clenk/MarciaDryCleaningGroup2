@@ -26,8 +26,8 @@ public class ServicesPanel extends JFrame
 		JList availableServices = new JList();
 		String services[] = new String[3];
 		services[0] = "Wash";
-		services[1] = "Dry";
-		services[2] = "onion";
+		services[1] = "Dry Clean";
+		services[2] = "Press";
 		availableServices.setListData(services);
 		SelectionPanel.add(availableServices);
 		ServicesPanel.add(SelectionPanel, BorderLayout.CENTER);
