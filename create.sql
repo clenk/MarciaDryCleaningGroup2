@@ -56,7 +56,7 @@ CREATE  TABLE IF NOT EXISTS `drycleaning`.`ORDER_DATA` (
   `Price` DECIMAL(6,2) NULL ,
   `Tax` DECIMAL(6,2) NULL ,
   `Total` DECIMAL(6,2) NULL ,
-  `PaymentMethod` DECIMAL(6,2) NULL ,
+  `PaymentMethod` VARCHAR(48) NULL ,
   `CUSTOMER_DATA_idCustomer` BIGINT NOT NULL ,
   PRIMARY KEY (`OrderNumber`) ,
   INDEX `fk_ORDER_DATA_CUSTOMER_DATA1` (`CUSTOMER_DATA_idCustomer` ASC) ,
