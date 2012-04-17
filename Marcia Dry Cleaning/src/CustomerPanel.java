@@ -7,17 +7,17 @@ import javax.swing.plaf.basic.BasicArrowButton;
 
 public class CustomerPanel
 {
-	private static JPanel CustomerPanel = new JPanel();
+	private JPanel CustomerPanel = new JPanel();
 
 	// GUI Variables
-	private static JTextField firstTF;
-	private static JTextField lastTF;
-	private static JTextField phoneTF;
-	private static JTextArea dispTA;
-	private static BasicArrowButton leftBtn;
-	private static BasicArrowButton rightBtn;
+	private JTextField firstTF;
+	private JTextField lastTF;
+	private JTextField phoneTF;
+	private JTextArea dispTA;
+	private BasicArrowButton leftBtn;
+	private BasicArrowButton rightBtn;
 	
-	public static JPanel buildNameBtnPanel() {
+	public JPanel buildNameBtnPanel() {
 		JPanel p = new JPanel();
 		JButton addBtn = new JButton("Add");
 		JButton findBtn = new JButton("Find");
@@ -32,7 +32,7 @@ public class CustomerPanel
 
 	}
 
-	public static JPanel buildPhoneBtnPanel() {
+	public JPanel buildPhoneBtnPanel() {
 		JPanel p = new JPanel();
 		JButton addBtn = new JButton("Add");
 		JButton findBtn = new JButton("Find");
@@ -47,7 +47,7 @@ public class CustomerPanel
 
 	}
 
-	public static JPanel buildNamePanel() {
+	public JPanel buildNamePanel() {
 		JPanel p = new JPanel();
 		p.setLayout(new GridLayout(3, 1));
 		
@@ -69,7 +69,7 @@ public class CustomerPanel
 		return p;
 	}
 
-	public static JPanel buildDisplayPanel() {
+	public JPanel buildDisplayPanel() {
 		JPanel tp = new JPanel();
 		dispTA = new JTextArea(6, 30);
 		dispTA.enableInputMethods(false);
@@ -92,7 +92,7 @@ public class CustomerPanel
 		return p;
 	}
 	
-	public static JPanel buildCustomerPanel() 
+	public JPanel buildCustomerPanel() 
 	{
 		JPanel tp = new JPanel();
 		tp.setLayout(new GridLayout(2, 1));

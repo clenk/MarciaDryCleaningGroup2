@@ -5,9 +5,9 @@ import javax.swing.JPanel;
 
 public class NewOrderPanel 
 {
-	private static JPanel NewOrderPanel = new JPanel();
+	private JPanel NewOrderPanel = new JPanel();
 	
-	public static JPanel buildNewOrderPanel()
+	public JPanel buildNewOrderPanel()
 	{
 		
 		return NewOrderPanel;

@@ -101,7 +101,7 @@ public class LogIn extends JFrame
 				conn = DriverManager.getConnection(url, username, password);
 				System.out.println("Database connection established");
 				stmt = conn.createStatement();
-				new Central();
+				Central c = new Central();
 				setVisible(false);
 			}
 			catch (Exception error) 
@@ -124,5 +124,13 @@ public class LogIn extends JFrame
 	public static Connection getConnection()
 	{
 		return conn;
+	}
+
+	
+	// MAIN - Brings up a LogIn frame
+	
+	public static void main(String args[])
+	{
+			LogIn li = new LogIn();
 	}
 }

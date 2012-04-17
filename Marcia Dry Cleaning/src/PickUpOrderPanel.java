@@ -5,9 +5,9 @@ import javax.swing.JPanel;
 
 public class PickUpOrderPanel 
 {
-	private static JPanel PickUpOrderPanel = new JPanel();
+	private JPanel PickUpOrderPanel = new JPanel();
 	
-	public static JPanel buildPickUpOrderPanel()
+	public JPanel buildPickUpOrderPanel()
 	{
 		
 		return PickUpOrderPanel;

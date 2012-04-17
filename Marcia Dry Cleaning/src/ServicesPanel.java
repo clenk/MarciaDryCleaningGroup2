@@ -4,29 +4,38 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import java.sql.*;
 import java.util.ArrayList;
 
 public class ServicesPanel extends JFrame
 {
-	private static JPanel ServicesPanel = new JPanel(new BorderLayout(3, 20));
-	private static JPanel SelectionPanel = new JPanel();
-	private static JPanel DisplayPanel = new JPanel();
-	private static JPanel EditPanel = new JPanel(new GridLayout(3, 3, 10, 10));
-	private static JPanel NewPanel = new JPanel(new GridLayout(3, 3, 10, 10));
+	private JPanel ServicesPanel = new JPanel(new BorderLayout(3, 20));
+	private JPanel SelectionPanel = new JPanel();
+	private JPanel DisplayPanel = new JPanel();
+	private JPanel EditPanel = new JPanel(new GridLayout(3, 3, 10, 10));
+	private JPanel NewPanel = new JPanel(new GridLayout(3, 3, 10, 10));
 	
-	public static JPanel buildServicesPanel()
+	
+	public ServicesPanel()
+	{
+		buildServicesPanel();
+	}
+	
+	public JPanel buildServicesPanel()
 	{
 		// Service Selection
 		Border centerBorder = BorderFactory.createTitledBorder("Select a Service:");
 		SelectionPanel.setBorder(centerBorder);
-		JList availableServices = new JList();		
 		try 
 		{
 			ArrayList<String> descriptions = new ArrayList();
@@ -45,16 +54,16 @@ public class ServicesPanel extends JFrame
 			{
 				displayDescriptions[i] = descriptions.get(i);
 			}
-			availableServices.setListData(displayDescriptions);
-			availableServices.addListSelectionListener(new availableServicesListener());
+			JComboBox availableServices = new JComboBox(displayDescriptions);
+			SelectionPanel.add(availableServices);
+			ServicesPanel.add(SelectionPanel, BorderLayout.CENTER);
+			availableServices.addActionListener(new availableServicesListener());
 		} 
 		catch (SQLException e) 
 		{
 			JOptionPane.showMessageDialog(null, "SQL input error");
 			e.printStackTrace();
 		}
-		SelectionPanel.add(availableServices);
-		ServicesPanel.add(SelectionPanel, BorderLayout.CENTER);
 		
 		// Service Information Display
 		JTextArea serviceInformation = new JTextArea(7, 30);
@@ -112,12 +121,12 @@ public class ServicesPanel extends JFrame
 		return ServicesPanel;
 	}
 	
-	// LISTENERS
-	
-	// Listener to populate text area
-	
-	/*private availableServicesListener implements ListSelectionListener
+	private class availableServicesListener implements ActionListener 
 	{
-		
-	}*/
+		public void actionPerformed(ActionEvent e) 
+		{
+
+		}
+
+	}
 }

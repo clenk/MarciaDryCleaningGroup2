@@ -4,6 +4,8 @@
  * the listeners and therefore the MySQL to get at the database. */
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.*;
 import javax.swing.*;
 
@@ -17,22 +19,19 @@ public class Central extends JFrame
 		setTitle("Marcia's Dry Cleaning");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		JTabbedPane tabbedPane = new JTabbedPane();
-		tabbedPane.addTab("  Services  ", ServicesPanel.buildServicesPanel());
-		tabbedPane.addTab("  Customers  ", CustomerPanel.buildCustomerPanel());
-		tabbedPane.addTab("  New Order  ", NewOrderPanel.buildNewOrderPanel());
-		tabbedPane.addTab("  Pick Up Order  ", PickUpOrderPanel.buildPickUpOrderPanel());
+		ServicesPanel sp = new ServicesPanel();
+		CustomerPanel cp = new CustomerPanel();
+		NewOrderPanel nop = new NewOrderPanel();
+		PickUpOrderPanel puop = new PickUpOrderPanel();
+		tabbedPane.addTab("  Services  ", sp.buildServicesPanel());
+		tabbedPane.addTab("  Customers  ", cp.buildCustomerPanel());
+		tabbedPane.addTab("  New Order  ", nop.buildNewOrderPanel());
+		tabbedPane.addTab("  Pick Up Order  ", puop.buildPickUpOrderPanel());
 		add(tabbedPane);
 		
 		setSize(500, 500);
 		centerOnScreen();
 		setVisible(true);
-	}
-	
-	// MAIN - Brings up a LogIn frame
-	
-	public static void main(String args[])
-	{
-			new LogIn();
 	}
 	
 	// CENTER ON SCREEN
