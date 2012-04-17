@@ -120,4 +120,9 @@ public class LogIn extends JFrame
 		Dimension size = toolkit.getScreenSize();
 		setLocation(size.width/2 - getWidth()/2, size.height/2 - getHeight()/2);
 	}
+	
+	public static Connection getConnection()
+	{
+		return conn;
+	}
 }

@@ -4,31 +4,55 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import java.sql.*;
+import java.util.ArrayList;
+
 public class ServicesPanel extends JFrame
 {
-	private static JPanel ServicesPanel = new JPanel(new BorderLayout(3, 50));
+	private static JPanel ServicesPanel = new JPanel(new BorderLayout(3, 20));
 	private static JPanel SelectionPanel = new JPanel();
 	private static JPanel DisplayPanel = new JPanel();
 	private static JPanel EditPanel = new JPanel(new GridLayout(3, 3, 10, 10));
-	private static JPanel BlankPanel = new JPanel();
+	private static JPanel NewPanel = new JPanel(new GridLayout(3, 3, 10, 10));
 	
 	public static JPanel buildServicesPanel()
 	{
-		ServicesPanel.add(BlankPanel, BorderLayout.NORTH);
-		
 		// Service Selection
 		Border centerBorder = BorderFactory.createTitledBorder("Select a Service:");
 		SelectionPanel.setBorder(centerBorder);
-		JList availableServices = new JList();
-		String services[] = new String[3];
-		services[0] = "Wash";
-		services[1] = "Dry";
-		services[2] = "onion";
-		availableServices.setListData(services);
+		JList availableServices = new JList();		
+		try 
+		{
+			ArrayList<String> descriptions = new ArrayList();
+			PreparedStatement IDLookup = LogIn.getConnection().prepareStatement("SELECT idService FROM service_data");
+			ResultSet IDs = IDLookup.executeQuery();
+			while(IDs.next())
+			{
+				PreparedStatement descriptionLookup = LogIn.getConnection().prepareStatement("SELECT ServiceDescription FROM service_data WHERE idService = ?");
+				descriptionLookup.setInt(1, IDs.getInt(1));
+				ResultSet activeDescription = descriptionLookup.executeQuery();
+				activeDescription.next();
+				descriptions.add(activeDescription.getString(1));
+			}
+			String displayDescriptions[] = new String[descriptions.size()];
+			for(int i = 0; i < descriptions.size(); i++)
+			{
+				displayDescriptions[i] = descriptions.get(i);
+			}
+			availableServices.setListData(displayDescriptions);
+			availableServices.addListSelectionListener(new availableServicesListener());
+		} 
+		catch (SQLException e) 
+		{
+			JOptionPane.showMessageDialog(null, "SQL input error");
+			e.printStackTrace();
+		}
 		SelectionPanel.add(availableServices);
 		ServicesPanel.add(SelectionPanel, BorderLayout.CENTER);
 		
@@ -44,26 +68,56 @@ public class ServicesPanel extends JFrame
 		// Edit Service
 		Border southBorder = BorderFactory.createTitledBorder("Edit Service:");
 		EditPanel.setBorder(southBorder);
-		JLabel newDescriptionTag = new JLabel("New Description:");
-		JLabel newPriceTag = new JLabel("New Price:");
-		JLabel newTimeRequiredTag = new JLabel("New Time Required");
-		JTextField newDescription = new JTextField(15);
-		JTextField newPrice = new JTextField("Price in format 0.00", 15);
-		JTextField newTimeRequired = new JTextField("Time in minutes", 15);
+		JLabel editDescriptionTag = new JLabel("Edit Description:");
+		JLabel editPriceTag = new JLabel("Edit Price:");
+		JLabel editTimeRequiredTag = new JLabel("Edit Time Required:");
+		JTextField editDescription = new JTextField(15);
+		JTextField editPrice = new JTextField("Price in format 0.00", 15);
+		JTextField editTimeRequired = new JTextField("Time in minutes", 15);
 		JButton descriptionSubmit = new JButton("Submit");
 		JButton priceSubmit = new JButton("Submit");
 		JButton timeRequiredSubmit = new JButton("Submit");
-		EditPanel.add(newDescriptionTag);
-		EditPanel.add(newDescription);
+		EditPanel.add(editDescriptionTag);
+		EditPanel.add(editDescription);
 		EditPanel.add(descriptionSubmit);
-		EditPanel.add(newPriceTag);
-		EditPanel.add(newPrice);
+		EditPanel.add(editPriceTag);
+		EditPanel.add(editPrice);
 		EditPanel.add(priceSubmit);
-		EditPanel.add(newTimeRequiredTag);
-		EditPanel.add(newTimeRequired);
+		EditPanel.add(editTimeRequiredTag);
+		EditPanel.add(editTimeRequired);
 		EditPanel.add(timeRequiredSubmit);
 		ServicesPanel.add(EditPanel, BorderLayout.SOUTH);
 		
+		// New Service
+		Border northBorder = BorderFactory.createTitledBorder("New Service:");
+		NewPanel.setBorder(northBorder);
+		JLabel newDescriptionTag = new JLabel("New Description:");
+		JLabel newPriceTag = new JLabel("New Price:");
+		JLabel newTimeRequiredTag = new JLabel("New Time Required:");
+		JTextField newDescription = new JTextField(15);
+		JTextField newPrice = new JTextField("Price in format 0.00", 15);
+		JTextField newTimeRequired = new JTextField("Time in minutes", 15);
+		JButton newEntrySubmit = new JButton("Submit New Entry");
+		NewPanel.add(newDescriptionTag);
+		NewPanel.add(newDescription);
+		NewPanel.add(new JLabel(""));
+		NewPanel.add(newPriceTag);
+		NewPanel.add(newPrice);
+		NewPanel.add(new JLabel(""));
+		NewPanel.add(newTimeRequiredTag);
+		NewPanel.add(newTimeRequired);
+		NewPanel.add(newEntrySubmit);
+		ServicesPanel.add(NewPanel, BorderLayout.NORTH);
+		
 		return ServicesPanel;
 	}
+	
+	// LISTENERS
+	
+	// Listener to populate text area
+	
+	/*private availableServicesListener implements ListSelectionListener
+	{
+		
+	}*/
 }
