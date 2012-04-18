@@ -18,7 +18,7 @@ public class LogIn extends JFrame
 	private static Statement stmt;
 	private static Connection conn = null;
 	
-	// LOGIN CONSTRUCTOR - Called by MAIN of CENTRAL
+	// LOGIN Constructor
 	
 	public LogIn()
 	{
