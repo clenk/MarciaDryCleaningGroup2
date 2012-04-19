@@ -3,6 +3,9 @@
 // CustomerPanel sets up the GUI for the "Customer" tab.
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicArrowButton;
@@ -10,6 +13,10 @@ import javax.swing.plaf.basic.BasicArrowButton;
 public class CustomerPanel
 {
 	private static JPanel CustomerPanel = new JPanel();
+	
+	//Database variables
+	private Connection conn;
+	private PreparedStatement stmt;
 
 	// GUI Variables
 	private JTextField firstTF;
@@ -21,11 +28,19 @@ public class CustomerPanel
 	private JCheckBox isMemberChkBx;
 	private JTextField phoneTF;
 	private JTextField emailTF;
-
 	private static BasicArrowButton leftPhoneBtn;
 	private static BasicArrowButton rightPhoneBtn;
 	private static BasicArrowButton leftEmailBtn;
 	private static BasicArrowButton rightEmailBtn;
+
+	String curPerson = ""; // The name of the current Person entry
+	
+	// CONSTRUCTOR
+	public CustomerPanel(Connection conn) {
+		this.conn = conn;
+	}
+
+	// GUI BUILDERS
 	
 	// Creates the add, find, delete, and edit buttons for the general customer info
 	public static JPanel buildNameBtnPanel() {
@@ -189,6 +204,152 @@ public class CustomerPanel
 		
 		return CustomerPanel;
 	}
+	
+	// LISTENERS
+/*
+	// Handles the buttons associated with the Name field
+	private class NameListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			String first = firstTF.getText(); // Get the first name
+			String last = lastTF.getText(); // Get the first name
+			String name = first+" "+last;
 
+			if (name.trim().equals("")) { // Don't allow blank names
+				JOptionPane.showMessageDialog(null, "Name cannot be blank!");
+				return;
+			}
+			
+			// Do different actions depending on which button was pressed
+			String buttonText = ((JButton)e.getSource()).getText();
+			try {
+				// If the Add button was pressed...
+				if (buttonText.equals("Add")) {
+					// Add a person with the name to the database
+					stmt = conn.prepareStatement("INSERT INTO PERSON (Name) VALUES('?')");
+					stmt.setString(1, name);
+					stmt.executeUpdate();
+				
+				// If the Find button was pressed...
+				} else if (buttonText.equals("Find")) { 
+					if (findPerson(name)) {
+						findPhones();
+					}
+
+				// If the Delete button was pressed...
+				} else if (buttonText.equals("Delete")) {
+					if (!curPerson.equals("")) {
+						deletePerson();
+					} else {
+						JOptionPane.showMessageDialog(null, "Find a person first!");
+					}
+				}
+			} catch (SQLException e1) { // Handle Errors
+				JOptionPane.showMessageDialog(null, "Database Error!");
+			}
+		}
+	}
+
+	// Handles the buttons associated with the Phone field
+	private class PhoneListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			String phone = phoneTF.getText(); // Get the Phone
+
+			if (phone.equals("")) { // Don't allow blank entries
+				JOptionPane.showMessageDialog(null, "Phone cannot be blank!");
+				return;
+			} else if (!phone.matches("\\d{3}-\\d{3}-\\d{4}")) { // Make sure a valid phone number was entered
+				JOptionPane.showMessageDialog(null, "Phone number must be in valid format (xxx-xxx-xxxx)!");
+			}
+			
+			// Do different actions depending on which button was pressed
+			String buttonText = ((JButton)e.getSource()).getText();
+			try {
+				// If the Add button was pressed...
+				if (buttonText.equals("Add")) {
+					if (!curPerson.equals("")) { // Make sure we have a person to add the phone to
+						JRadioButton type = getSelectedPhoneType();
+						if (type != null) { // Make sure a phone type was selected 
+							stmt.executeUpdate("INSERT INTO PHONE(Name, Phone, NumType) VALUES('"+curPerson+"','"+phone+"','"+type.getText()+"')");
+						} else { // Error
+							JOptionPane.showMessageDialog(null, "Please choose a phone type!");
+						}
+
+						// Update the output with the newly added phone number
+						findPerson(curPerson);
+						findPhones();
+					} else { // Error
+						JOptionPane.showMessageDialog(null, "Find a person or phone first!");
+					}
+					
+				// If the Find button was pressed...
+				} else if (buttonText.equals("Find")) { 
+					if (findNum(phone)) {
+						findPhones();
+					}
+
+				// If the Delete button was pressed...
+				} else if (buttonText.equals("Delete")) {
+					if (!curPerson.equals("")) {
+						deletePhone(phone);
+					} else {
+						JOptionPane.showMessageDialog(null, "Find a person or phone first!");
+					}
+				}
+			} catch (SQLException e1) { // Handle Errors
+				JOptionPane.showMessageDialog(null, "Database Error!");
+			}
+		}
+	}
+
+	// Handles the right arrow button
+	private class LeftListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			try {
+				if (nameSet.previous()) { // If another name exists...
+					curPerson = nameSet.getString(1);
+					dispTA.setText(curPerson + "\n"); // Output the name
+					findPhones(); // Output the associated phone numbers
+				}
+				
+				// Reset the other arrow button if it's disable
+				if (!rightBtn.isEnabled()) {
+					rightBtn.setEnabled(true);
+				}
+				
+				// Disable the button if the end of the result set is reached
+				if (nameSet.isFirst()) {
+					leftBtn.setEnabled(false);
+				}
+			} catch (SQLException e1) {
+				System.err.println("LeftListener Error");
+			}
+		}
+	}
+
+	// Handles the right arrow button
+	private class RightListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			try {
+				if (nameSet.next()) { // If another name exists...
+					curPerson = nameSet.getString(1);
+					dispTA.setText(curPerson + "\n"); // Output the name
+					findPhones(); // Output the associated phone numbers
+
+					// Reset the other arrow button if it's disable
+					if (!leftBtn.isEnabled()) {
+						leftBtn.setEnabled(true);
+					}
+					
+					// Disable the button if the end of the result set is reached
+					if (nameSet.isLast()) {
+						rightBtn.setEnabled(false);
+					}
+				}
+			} catch (SQLException e1) {
+				System.err.println("RightListener Error");
+			}
+		}
+	}
+*/
 }
 

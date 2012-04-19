@@ -21,12 +21,12 @@ public class Central extends JFrame
 		JTabbedPane tabbedPane = new JTabbedPane();
 		ServicesPanel sp = new ServicesPanel(conn);
 		CustomerPanel cp = new CustomerPanel(conn);
-		NewOrderPanel nop = new NewOrderPanel(conn);
-		PickUpOrderPanel puop = new PickUpOrderPanel(conn);
+		//NewOrderPanel nop = new NewOrderPanel(conn);
+		//PickUpOrderPanel puop = new PickUpOrderPanel(conn);
 		tabbedPane.addTab("  Services  ", sp.buildServicesPanel());
 		tabbedPane.addTab("  Customers  ", cp.buildCustomerPanel());
-		tabbedPane.addTab("  New Order  ", nop.buildNewOrderPanel());
-		tabbedPane.addTab("  Pick Up Order  ", puop.buildPickUpOrderPanel());
+		//tabbedPane.addTab("  New Order  ", nop.buildNewOrderPanel());
+		//tabbedPane.addTab("  Pick Up Order  ", puop.buildPickUpOrderPanel());
 		add(tabbedPane);
 		
 		setSize(500, 500);
