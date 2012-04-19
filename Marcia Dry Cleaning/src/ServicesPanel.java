@@ -34,6 +34,12 @@ public class ServicesPanel extends JFrame
 	private JTextField editPrice = new JTextField("Price in format 0.00", 15);
 	private JTextField editTimeRequired = new JTextField("Time in minutes", 15);
 	private int selected = 0;
+	private Connection conn;
+	
+	public ServicesPanel(Connection conn)
+	{
+		this.conn = conn;
+	}
 	
 	public JPanel buildServicesPanel()
 	{
@@ -113,11 +119,11 @@ public class ServicesPanel extends JFrame
 		SelectionPanel.setBorder(centerBorder);
 		try 
 		{
-			PreparedStatement IDLookup = LogIn.getConnection().prepareStatement("SELECT idService FROM service_data");
+			PreparedStatement IDLookup = conn.prepareStatement("SELECT idService FROM service_data");
 			ResultSet IDs = IDLookup.executeQuery();
 			while(IDs.next())
 			{
-				PreparedStatement descriptionLookup = LogIn.getConnection().prepareStatement("SELECT ServiceDescription FROM service_data WHERE idService = ?");
+				PreparedStatement descriptionLookup = conn.prepareStatement("SELECT ServiceDescription FROM service_data WHERE idService = ?");
 				descriptionLookup.setInt(1, IDs.getInt(1));
 				ResultSet activeDescription = descriptionLookup.executeQuery();
 				activeDescription.next();
@@ -156,7 +162,7 @@ public class ServicesPanel extends JFrame
 			String timeRequired = "";
 			try 
 			{
-				PreparedStatement infoLookup = LogIn.getConnection().prepareStatement("SELECT ServiceDescription, Price, TimeRequired FROM service_data WHERE idService = ?");
+				PreparedStatement infoLookup = conn.prepareStatement("SELECT ServiceDescription, Price, TimeRequired FROM service_data WHERE idService = ?");
 				infoLookup.setInt(1, activeItem+1);
 				ResultSet serviceInfo = infoLookup.executeQuery();
 				if(serviceInfo.next())
@@ -222,7 +228,7 @@ public class ServicesPanel extends JFrame
 				}
 				try 
 				{
-					PreparedStatement newServiceEntry = LogIn.getConnection().prepareStatement("INSERT INTO service_data (ServiceDescription, Price, TimeRequired) VALUES(?, ?, ?)");
+					PreparedStatement newServiceEntry = conn.prepareStatement("INSERT INTO service_data (ServiceDescription, Price, TimeRequired) VALUES(?, ?, ?)");
 					newServiceEntry.setString(1, newDescription.getText());
 					newServiceEntry.setDouble(2, price);
 					newServiceEntry.setTime(3, Time.valueOf(hours + ":" + stringMinutes + ":00"));
@@ -252,7 +258,7 @@ public class ServicesPanel extends JFrame
 			{
 				int activeItem = availableServices.getSelectedIndex();
 				try {
-					PreparedStatement updateServiceDescription = LogIn.getConnection().prepareStatement("UPDATE service_data SET ServiceDescription = ? WHERE idService = ?");
+					PreparedStatement updateServiceDescription = conn.prepareStatement("UPDATE service_data SET ServiceDescription = ? WHERE idService = ?");
 					updateServiceDescription.setString(1, editDescription.getText());
 					updateServiceDescription.setInt(2, activeItem+1);
 					updateServiceDescription.executeUpdate();
@@ -284,7 +290,7 @@ public class ServicesPanel extends JFrame
 				try
 				{
 					price = Double.parseDouble(editPrice.getText());
-					PreparedStatement updatePrice = LogIn.getConnection().prepareStatement("UPDATE service_data SET Price = ? WHERE idService = ?");
+					PreparedStatement updatePrice = conn.prepareStatement("UPDATE service_data SET Price = ? WHERE idService = ?");
 					updatePrice.setDouble(1, price);
 					updatePrice.setInt(2, activeItem+1);
 					updatePrice.executeUpdate();
@@ -326,7 +332,7 @@ public class ServicesPanel extends JFrame
 				{
 					stringMinutes = Integer.toString(minutes);
 				}
-				PreparedStatement updateTimeRequired = LogIn.getConnection().prepareStatement("UPDATE service_data SET TimeRequired = ? WHERE idService = ?");
+				PreparedStatement updateTimeRequired = conn.prepareStatement("UPDATE service_data SET TimeRequired = ? WHERE idService = ?");
 				updateTimeRequired.setTime(1, Time.valueOf(hours + ":" + stringMinutes + ":00"));
 				updateTimeRequired.setInt(2, activeItem+1);
 				updateTimeRequired.executeUpdate();

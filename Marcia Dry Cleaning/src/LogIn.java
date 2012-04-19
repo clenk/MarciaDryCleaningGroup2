@@ -11,12 +11,12 @@ import javax.swing.*;
 
 public class LogIn extends JFrame
 {
-	private static String username;
-	private static String password;
+	private String username;
+	private String password;
 	private TextField usernameField;
 	private JPasswordField passwordField;
-	private static Statement stmt;
-	private static Connection conn = null;
+	private Statement stmt;
+	private Connection conn = null;
 	
 	// LOGIN Constructor
 	
@@ -61,12 +61,12 @@ public class LogIn extends JFrame
 				password = sb.toString();
 				try
 				{
-					String url = "jdbc:mysql://localhost/drycleaning";
+					String url = "jdbc:mysql://localhost/Group2";
 					Class.forName("com.mysql.jdbc.Driver").newInstance();
 					conn = DriverManager.getConnection(url, username, password);
 					System.out.println("Database connection established");
 					stmt = conn.createStatement();
-					new Central();
+					new Central(conn);
 					setVisible(false);
 				}
 				catch (Exception error) 
@@ -96,12 +96,12 @@ public class LogIn extends JFrame
 			password = sb.toString();
 			try
 			{
-				String url = "jdbc:mysql://localhost/drycleaning";
+				String url = "jdbc:mysql://localhost/Group2";
 				Class.forName("com.mysql.jdbc.Driver").newInstance();
 				conn = DriverManager.getConnection(url, username, password);
 				System.out.println("Database connection established");
 				stmt = conn.createStatement();
-				Central c = new Central();
+				Central c = new Central(conn);
 				setVisible(false);
 			}
 			catch (Exception error) 
@@ -121,7 +121,7 @@ public class LogIn extends JFrame
 		setLocation(size.width/2 - getWidth()/2, size.height/2 - getHeight()/2);
 	}
 	
-	public static Connection getConnection()
+	public Connection getConnection()
 	{
 		return conn;
 	}
@@ -129,7 +129,7 @@ public class LogIn extends JFrame
 	
 	// MAIN - Brings up a LogIn frame
 	
-	public static void main(String args[])
+	public void main(String args[])
 	{
 			LogIn li = new LogIn();
 	}

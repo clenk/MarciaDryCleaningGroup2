@@ -14,15 +14,15 @@ public class Central extends JFrame
 	
 	// CENTRAL CONSTRUCTOR
 	
-	public Central()
+	public Central(Connection conn)
 	{	
 		setTitle("Marcia's Dry Cleaning");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		JTabbedPane tabbedPane = new JTabbedPane();
-		ServicesPanel sp = new ServicesPanel();
-		CustomerPanel cp = new CustomerPanel();
-		NewOrderPanel nop = new NewOrderPanel();
-		PickUpOrderPanel puop = new PickUpOrderPanel();
+		ServicesPanel sp = new ServicesPanel(conn);
+		CustomerPanel cp = new CustomerPanel(conn);
+		NewOrderPanel nop = new NewOrderPanel(conn);
+		PickUpOrderPanel puop = new PickUpOrderPanel(conn);
 		tabbedPane.addTab("  Services  ", sp.buildServicesPanel());
 		tabbedPane.addTab("  Customers  ", cp.buildCustomerPanel());
 		tabbedPane.addTab("  New Order  ", nop.buildNewOrderPanel());
