@@ -129,7 +129,7 @@ public class LogIn extends JFrame
 	
 	// MAIN - Brings up a LogIn frame
 	
-	public void main(String args[])
+	public static void main(String args[])
 	{
 			LogIn li = new LogIn();
 	}
