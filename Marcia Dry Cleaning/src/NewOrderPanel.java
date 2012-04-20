@@ -6,6 +6,10 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -14,7 +18,7 @@ import javax.swing.plaf.basic.BasicArrowButton;
 public class NewOrderPanel 
 {
 	private JPanel NewOrderPanel = new JPanel();
-	
+	private Connection conn;
 	private JTextField firstTF;
 	private JTextField lastTF;
 	private JTextField phoneTF;
@@ -22,6 +26,10 @@ public class NewOrderPanel
 	private BasicArrowButton leftBtn;
 	private BasicArrowButton rightBtn;
 	
+	public NewOrderPanel(Connection conn)
+	{
+		this.conn = conn;
+	}
 	public JPanel buildNewOrderPanel()
 	{
 		//JPanel p = new JPanel();
@@ -78,18 +86,57 @@ public class NewOrderPanel
 	}
 	public JPanel buildSouthPanel() {
 		JPanel p = new JPanel();
+		p.setLayout(new GridLayout(1, 2));
 		Border southBorder = BorderFactory.createTitledBorder("South Panel Stuff");
 		p.setBorder(southBorder);
-		p.add(lilWestPanel(), BorderLayout.WEST);
-		p.add(lilEastPanel(), BorderLayout.EAST);
+		p.add(lilWestPanel());
+		p.add(lilEastPanel());
 		
 		return p;
 	}
+	public int getServiceNumber() {
+		int num = 0;
+		try
+		{
+			PreparedStatement serviceCountLookup = conn.prepareStatement("SELECT COUNT(*) ServiceDescription FROM service_data");
+			ResultSet count = serviceCountLookup.executeQuery();
+			if(count.next()) {
+				num = count.getInt(1);
+			}
+			
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return num;
+	}
+	public String[] getServices() {
+		int size = getServiceNumber();
+		String[] servicesArray = new String[size];
+		ResultSet serviceInfo;
+		try
+		{
+			PreparedStatement serviceLookup = conn.prepareStatement("SELECT ServiceDescription FROM service_data");
+			serviceInfo = serviceLookup.executeQuery();
+			for(int i = 0; i < size; i++) {
+				if(serviceInfo.next()) {
+					servicesArray[i] = serviceInfo.getString(1);
+				}
+			}
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return servicesArray;
+	}
 	public JPanel lilWestPanel() {
-		String[] data = {"hello", "world", "I", "AM", "AWESOME"};
+		String[] data = getServices();
 		JPanel wp = new JPanel(); 
 		//wp.add(new JLabel("Object: "));
-		JTextField objectName = new JTextField(14);
+		JTextField objectName = new JTextField(15);
 		
 		JPanel objectInfo = new JPanel();
 		objectInfo.add(new JLabel("Object: "), BorderLayout.WEST);
@@ -100,7 +147,8 @@ public class NewOrderPanel
 		list.setLayoutOrientation(JList.VERTICAL);
 		list.setVisibleRowCount(-1);
 		JScrollPane listScroller = new JScrollPane(list);
-		listScroller.setPreferredSize(new Dimension(100, 60));
+		//listScroller.setPreferredSize(new Dimension(10, 10));
+		//listScroller.setSize(10, 5);
 		wp.setLayout(new GridLayout(2, 1));
 		wp.add(objectInfo);
 		wp.add(listScroller/*, BorderLayout.SOUTH*/);
