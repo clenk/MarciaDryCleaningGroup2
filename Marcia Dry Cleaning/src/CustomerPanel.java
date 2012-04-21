@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicArrowButton;
@@ -35,10 +36,11 @@ public class CustomerPanel
 	private BasicArrowButton leftEmailBtn;
 	private BasicArrowButton rightEmailBtn;
 
-	String curPerson = ""; // The name of the current Person entry
+	int curPerson; // The id of the current Person entry (column: CUSTOMER_DATA.idCustomer)
 	
 	// CONSTRUCTOR
 	public CustomerPanel(Connection conn) {
+		this.curPerson = -1;
 		this.conn = conn;
 	}
 
@@ -211,6 +213,73 @@ public class CustomerPanel
 		return CustomerPanel;
 	}
 	
+	// LOGIC (used by the listeners)
+	
+	// Adds a person to the database
+	private boolean addPerson(String first, String last, String street, String city, String state, String zip, int isMembr) throws SQLException {
+		// First see if the person is already in the database
+		stmt = conn.prepareStatement("SELECT First, Last FROM CUSTOMER_DATA WHERE First = ? AND Last = ?");
+		stmt.setString(1, first);
+		stmt.setString(2, last);
+		ResultSet rs = stmt.executeQuery();
+		if (rs.next()) { // If any entries found...
+			JOptionPane.showMessageDialog(null, "Error: Customer already in the database!");
+			return false;
+		}
+		
+		// Add a person with the name to the database
+		stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA(First, Last, Street, City, State, Zip, IsClubMember) VALUES(?,?,?,?,?,?,?)");
+		stmt.setString(1, first);
+		stmt.setString(2, last);
+		stmt.setString(3, street);
+		stmt.setString(4, city);
+		stmt.setString(5, state);
+		stmt.setString(6, zip);
+		stmt.setInt(7, isMembr);
+		try {
+			stmt.executeUpdate();
+			JOptionPane.showMessageDialog(null, "Customer added!");
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Customer could not be added!");
+			return false;
+		}
+	}
+	
+	// Finds the person with the specified first/last name combination in the database
+	private boolean findPerson(String first, String last) throws SQLException {
+		/*// Reset the arrow buttons
+		leftBtn.setEnabled(false);
+		rightBtn.setEnabled(false);*/
+		
+		// Search the database for the name
+		stmt = conn.prepareStatement("SELECT idCustomer, First, Last, Street, City, State, Zip, IsClubMember FROM CUSTOMER_DATA WHERE First = ? AND Last = ?");
+		stmt.setString(1, first);
+		stmt.setString(2, last);
+		ResultSet rs = stmt.executeQuery();
+		
+		if (rs.next()) { // If any entries found...
+			curPerson = rs.getInt("idCustomer");
+			// Fill in the form fields
+			firstTF.setText(rs.getString("First"));
+			lastTF.setText(rs.getString("Last"));
+			streetTF.setText(rs.getString("Street"));
+			cityTF.setText(rs.getString("City"));
+			stateTF.setText(rs.getString("State"));
+			zipTF.setText(rs.getString("Zip"));
+			if (rs.getBoolean("IsClubMember")) {
+				isMemberChkBx.setSelected(true);
+			} else {
+				isMemberChkBx.setSelected(false);
+			}
+			
+			return true;
+		} else { // If the name isn't in the database, show an error message
+			JOptionPane.showMessageDialog(null, "No one with that name found in the database!");
+			return false;
+		}
+	}
+	
 	// LISTENERS
 
 	// Handles the buttons associated with the Name field
@@ -224,7 +293,7 @@ public class CustomerPanel
 			String state = stateTF.getText();
 			String zip = zipTF.getText();
 			Boolean clubBool = isMemberChkBx.isSelected();
-			int isClubMember = clubBool.compareTo(false);
+			int isClubMember = clubBool.compareTo(false); // convert boolean to int
 
 			if (first.trim().equals("") || last.trim().equals("")) { // Don't allow blank names (NOT NULL)
 				JOptionPane.showMessageDialog(null, "Name cannot be blank!");
@@ -236,26 +305,18 @@ public class CustomerPanel
 			try {
 				// If the Add button was pressed...
 				if (buttonText.equals("Add")) {
-					// Add a person with the name to the database
-					stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA(First, Last, Street, City, State, Zip, IsClubMember) VALUES(?,?,?,?,?,?,?)");
-					stmt.setString(1, first);
-					stmt.setString(2, last);
-					stmt.setString(3, street);
-					stmt.setString(4, city);
-					stmt.setString(5, state);
-					stmt.setString(6, zip);
-					stmt.setInt(7, isClubMember);
-					stmt.executeUpdate();
+					addPerson(first, last, street, city, state, zip, isClubMember);
 				
 				// If the Find button was pressed...
 				} else if (buttonText.equals("Find")) { 
 					/*if (findPerson(name)) {
 						findPhones();
 					}*/
+					findPerson(first, last);
 
 				// If the Delete button was pressed...
 				} else if (buttonText.equals("Delete")) {
-					if (!curPerson.equals("")) {
+					if (curPerson > 0) {
 						//deletePerson();
 					} else {
 						JOptionPane.showMessageDialog(null, "Find a person first!");
