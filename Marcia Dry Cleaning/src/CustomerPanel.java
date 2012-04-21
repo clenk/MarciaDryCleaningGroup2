@@ -217,7 +217,7 @@ public class CustomerPanel
 	
 	// Adds a person to the database
 	private boolean addPerson(String first, String last, String street, String city, String state, String zip, int isMembr) throws SQLException {
-		// First see if the person is already in the database
+		// First make sure the person is not already in the database
 		stmt = conn.prepareStatement("SELECT First, Last FROM CUSTOMER_DATA WHERE First = ? AND Last = ?");
 		stmt.setString(1, first);
 		stmt.setString(2, last);
@@ -248,10 +248,6 @@ public class CustomerPanel
 	
 	// Finds the person with the specified first/last name combination in the database
 	private boolean findPerson(String first, String last) throws SQLException {
-		/*// Reset the arrow buttons
-		leftBtn.setEnabled(false);
-		rightBtn.setEnabled(false);*/
-		
 		// Search the database for the name
 		stmt = conn.prepareStatement("SELECT idCustomer, First, Last, Street, City, State, Zip, IsClubMember FROM CUSTOMER_DATA WHERE First = ? AND Last = ?");
 		stmt.setString(1, first);
@@ -276,6 +272,53 @@ public class CustomerPanel
 			return true;
 		} else { // If the name isn't in the database, show an error message
 			JOptionPane.showMessageDialog(null, "No one with that name found in the database!");
+			return false;
+		}
+	}
+	
+	// Delete the currently selected person
+	private boolean delPerson() {
+		try {
+			// Delete them from the database
+			stmt = conn.prepareStatement("DELETE FROM CUSTOMER_DATA WHERE `idCustomer`=?");
+			stmt.setInt(1, curPerson);
+			stmt.executeUpdate();
+			
+			// Clear the form fields
+			curPerson = -1;
+			firstTF.setText("");
+			lastTF.setText("");
+			streetTF.setText("");
+			cityTF.setText("");
+			stateTF.setText("");
+			zipTF.setText("");
+			isMemberChkBx.setSelected(false);
+			
+			JOptionPane.showMessageDialog(null, "Customer deleted!");
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Customer could not be deleted!");
+			return false;
+		}
+	}
+
+	// Edit the data of the current person in the database
+	private boolean editPerson(String first, String last, String street, String city, String state, String zip, int isMembr) throws SQLException {
+		stmt = conn.prepareStatement("UPDATE CUSTOMER_DATA SET `First`=?, `Last`=?, `Street`=?, `City`=?, `State`=?, `Zip`=?, `IsClubMember`=? WHERE `idCustomer`=?");
+		stmt.setString(1, first);
+		stmt.setString(2, last);
+		stmt.setString(3, street);
+		stmt.setString(4, city);
+		stmt.setString(5, state);
+		stmt.setString(6, zip);
+		stmt.setInt(7, isMembr);
+		stmt.setInt(8, curPerson);
+		try {
+			stmt.executeUpdate();
+			JOptionPane.showMessageDialog(null, "Customer updated!");
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Customer could not be updated!");
 			return false;
 		}
 	}
@@ -317,14 +360,18 @@ public class CustomerPanel
 				// If the Delete button was pressed...
 				} else if (buttonText.equals("Delete")) {
 					if (curPerson > 0) {
-						//deletePerson();
+						delPerson();
 					} else {
-						JOptionPane.showMessageDialog(null, "Find a person first!");
+						JOptionPane.showMessageDialog(null, "Error: Find a person first!");
 					}
 					
 				// If the Edit button was pressed...
 				} else if (buttonText.equals("Edit")) {
-					
+					if (curPerson > 0) {
+						editPerson(first, last, street, city, state, zip, isClubMember);
+					} else {
+						JOptionPane.showMessageDialog(null, "Error: Find a person first!");
+					}
 				}
 			} catch (SQLException e1) { // Handle Errors
 				e1.printStackTrace();
