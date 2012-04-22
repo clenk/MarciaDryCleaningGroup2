@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicArrowButton;
@@ -35,10 +36,15 @@ public class CustomerPanel
 	private BasicArrowButton leftEmailBtn;
 	private BasicArrowButton rightEmailBtn;
 
-	String curPerson = ""; // The name of the current Person entry
+	int curPerson; // The id of the current person entry (column: CUSTOMER_DATA.idCustomer)
+	ResultSet phoneSet; // Holds all the phones for the current person
+	String curPhone = ""; // The current phone entry
+	ResultSet emailSet; // Holds all the Emails for the current person
+	String curEmail = ""; // The current Email entry
 	
 	// CONSTRUCTOR
 	public CustomerPanel(Connection conn) {
+		this.curPerson = -1;
 		this.conn = conn;
 	}
 
@@ -65,7 +71,7 @@ public class CustomerPanel
 	// Creates the text fields for the general customer info
 	public JPanel buildNamePanel() {
 		JPanel p = new JPanel();
-		p.setLayout(new GridLayout(8, 1));
+		p.setLayout(new GridLayout(8, 1, 0, -2));
 		Border custBorder = BorderFactory.createTitledBorder("Customer Info:");
 		p.setBorder(custBorder);
 		
@@ -133,7 +139,7 @@ public class CustomerPanel
 		newPhoneTF = new JTextField(8);
 		newPhonePanel.add(newPhoneTF);
 		JButton addPhoneBtn = new JButton("Add");
-		//addPhoneBtn.addActionListener(new addPhoneListener());
+		addPhoneBtn.addActionListener(new PhoneListener());
 		newPhonePanel.add(addPhoneBtn);
 		p.add(newPhonePanel, BorderLayout.PAGE_START);
 		
@@ -142,19 +148,19 @@ public class CustomerPanel
 		curPhoneTF = new JTextField(8);
 		curPhonesPanel.add(curPhoneTF);
 		leftPhoneBtn = new BasicArrowButton(SwingConstants.WEST);
-		//leftBtn.addActionListener(new LeftListener());
+		leftPhoneBtn.addActionListener(new LeftPhoneListener());
 		curPhonesPanel.add(leftPhoneBtn);
 		rightPhoneBtn = new BasicArrowButton(SwingConstants.EAST);
-		//rightBtn.addActionListener(new RightListener());
+		rightPhoneBtn.addActionListener(new RightPhoneListener());
 		curPhonesPanel.add(rightPhoneBtn);
 		p.add(curPhonesPanel, BorderLayout.CENTER);
 		
 		JPanel updatePhonesPanel = new JPanel();
 		JButton delPhonesBtn = new JButton("Delete");
-		//delPhonesBtn.addActionListener(new RightListener());
+		delPhonesBtn.addActionListener(new PhoneListener());
 		updatePhonesPanel.add(delPhonesBtn);
 		JButton editPhoneBtn = new JButton("Edit");
-		//editPhoneBtn.addActionListener(new RightListener());
+		editPhoneBtn.addActionListener(new PhoneListener());
 		updatePhonesPanel.add(editPhoneBtn);
 		p.add(updatePhonesPanel, BorderLayout.PAGE_END);
 		
@@ -173,7 +179,7 @@ public class CustomerPanel
 		newEmailTF = new JTextField(12);
 		newEmailPanel.add(newEmailTF);
 		JButton addPhoneBtn = new JButton("Add");
-		//addPhoneBtn.addActionListener(new addPhoneListener());
+		addPhoneBtn.addActionListener(new EmailListener());
 		newEmailPanel.add(addPhoneBtn);
 		p.add(newEmailPanel, BorderLayout.PAGE_START);
 		
@@ -182,20 +188,20 @@ public class CustomerPanel
 		curEmailTF = new JTextField(12);
 		curEmailsPanel.add(curEmailTF);
 		leftEmailBtn = new BasicArrowButton(SwingConstants.WEST);
-		//leftBtn.addActionListener(new LeftListener());
+		leftEmailBtn.addActionListener(new LeftEmailListener());
 		curEmailsPanel.add(leftEmailBtn);
 		rightEmailBtn = new BasicArrowButton(SwingConstants.EAST);
-		//rightBtn.addActionListener(new RightListener());
+		rightEmailBtn.addActionListener(new RightEmailListener());
 		curEmailsPanel.add(rightEmailBtn);
 		p.add(curEmailsPanel, BorderLayout.CENTER);
 		
 		JPanel updateEmailsPanel = new JPanel();
-		JButton delPhonesBtn = new JButton("Delete");
-		//delPhonesBtn.addActionListener(new RightListener());
-		updateEmailsPanel.add(delPhonesBtn);
-		JButton editPhoneBtn = new JButton("Edit");
-		//editPhoneBtn.addActionListener(new RightListener());
-		updateEmailsPanel.add(editPhoneBtn);
+		JButton delEmailsBtn = new JButton("Delete");
+		delEmailsBtn.addActionListener(new EmailListener());
+		updateEmailsPanel.add(delEmailsBtn);
+		JButton editEmailBtn = new JButton("Edit");
+		editEmailBtn.addActionListener(new EmailListener());
+		updateEmailsPanel.add(editEmailBtn);
 		p.add(updateEmailsPanel, BorderLayout.PAGE_END);
 		
 		return p;
@@ -211,6 +217,330 @@ public class CustomerPanel
 		return CustomerPanel;
 	}
 	
+	// LOGIC (used by the listeners)
+	
+	// Clears the form fields 
+	private void clear() {
+		curPerson = -1;
+		firstTF.setText("");
+		lastTF.setText("");
+		streetTF.setText("");
+		cityTF.setText("");
+		stateTF.setText("");
+		zipTF.setText("");
+		isMemberChkBx.setSelected(false);
+		curPhoneTF.setText("");
+		curEmailTF.setText("");
+		newPhoneTF.setText("");
+		newEmailTF.setText("");
+		leftPhoneBtn.setEnabled(false);
+		rightPhoneBtn.setEnabled(false);
+		leftEmailBtn.setEnabled(false);
+		rightEmailBtn.setEnabled(false);
+	}
+	
+	// Adds a person to the database
+	private boolean addPerson(String first, String last, String street, String city, String state, String zip, int isMembr) throws SQLException {
+		// First make sure the person is not already in the database
+		stmt = conn.prepareStatement("SELECT First, Last FROM CUSTOMER_DATA WHERE First = ? AND Last = ?");
+		stmt.setString(1, first);
+		stmt.setString(2, last);
+		ResultSet rs = stmt.executeQuery();
+		if (rs.next()) { // If any entries found...
+			JOptionPane.showMessageDialog(null, "Error: Customer already in the database!");
+			return false;
+		}
+		
+		// Add a person with the name to the database
+		stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA(First, Last, Street, City, State, Zip, IsClubMember) VALUES(?,?,?,?,?,?,?)");
+		stmt.setString(1, first);
+		stmt.setString(2, last);
+		stmt.setString(3, street);
+		stmt.setString(4, city);
+		stmt.setString(5, state);
+		stmt.setString(6, zip);
+		stmt.setInt(7, isMembr);
+		try {
+			stmt.executeUpdate();
+			JOptionPane.showMessageDialog(null, "Customer added!");
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Customer could not be added!");
+			return false;
+		}
+	}
+	
+	// Finds the person with the specified first/last name combination in the database
+	private boolean findPerson(String first, String last) throws SQLException {
+		// Search the database for the name
+		stmt = conn.prepareStatement("SELECT idCustomer, First, Last, Street, City, State, Zip, IsClubMember FROM CUSTOMER_DATA WHERE First = ? AND Last = ?");
+		stmt.setString(1, first);
+		stmt.setString(2, last);
+		ResultSet rs = stmt.executeQuery();
+		
+		if (rs.next()) { // If any entries found...
+			clear();
+			curPerson = rs.getInt("idCustomer");
+			// Fill in the form fields
+			firstTF.setText(rs.getString("First"));
+			lastTF.setText(rs.getString("Last"));
+			streetTF.setText(rs.getString("Street"));
+			cityTF.setText(rs.getString("City"));
+			stateTF.setText(rs.getString("State"));
+			zipTF.setText(rs.getString("Zip"));
+			if (rs.getBoolean("IsClubMember")) {
+				isMemberChkBx.setSelected(true);
+			} else {
+				isMemberChkBx.setSelected(false);
+			}
+			
+			// Find their phone info 
+			stmt = conn.prepareStatement("SELECT PhoneNum FROM PHONE, CUSTOMER_DATA_HAS_PHONE WHERE idPhone = PHONE_idPhone AND CUSTOMER_DATA_idCustomer = ?");
+			stmt.setInt(1, curPerson);
+			phoneSet = stmt.executeQuery();
+			if (phoneSet.next()) { // If any entries found...
+				curPhone = phoneSet.getString(1);
+				curPhoneTF.setText(curPhone); // Output the first phone number
+				
+				// Enable the right button if there is more than 1 result
+				if (!phoneSet.isLast()) {
+					rightPhoneBtn.setEnabled(true);
+				} else {
+					rightPhoneBtn.setEnabled(false);
+				}
+				leftPhoneBtn.setEnabled(false); // Disable the left button because we're on the first result  
+			}
+			
+			// Find their email info
+			stmt = conn.prepareStatement("SELECT EmailAddr FROM EMAIL, CUSTOMER_DATA_HAS_EMAIL WHERE idEmail = EMAIL_idEmail AND CUSTOMER_DATA_idCustomer = ?");
+			stmt.setInt(1, curPerson);
+			emailSet = stmt.executeQuery();
+			if (emailSet.next()) { // If any entries found...
+				curEmail = emailSet.getString(1);
+				curEmailTF.setText(curEmail); // Output the first email
+				
+				// Enable the right button if there is more than 1 result
+				if (!emailSet.isLast()) {
+					rightEmailBtn.setEnabled(true);
+				} else {
+					rightEmailBtn.setEnabled(false);
+				}
+				leftEmailBtn.setEnabled(false); // Disable the left button because we're on the first result  
+			}
+			
+			return true;
+		} else { // If the name isn't in the database, show an error message
+			JOptionPane.showMessageDialog(null, "No one with that name found in the database!");
+			return false;
+		}
+	}
+	
+	// Delete the currently selected person
+	private boolean delPerson() {
+		try {
+			// First delete their emails and phones
+			phoneSet.beforeFirst();
+			while (phoneSet.next()) {
+				curPhone = phoneSet.getString(1);
+				delPhone(false);
+				phoneSet.beforeFirst();
+			}
+			emailSet.beforeFirst();
+			while (emailSet.next()) {
+				curEmail = emailSet.getString(1);
+				delEmail(false);
+				emailSet.beforeFirst();
+			}
+			System.err.println("phones and emails deled");
+			
+			// Delete them from the database
+			stmt = conn.prepareStatement("DELETE FROM CUSTOMER_DATA WHERE `idCustomer`=?");
+			System.err.println("statement prepared");
+			stmt.setInt(1, curPerson);
+			stmt.executeUpdate();
+			
+			System.err.println("update executed");
+			
+			// Clear the form fields
+			clear();
+			System.err.println("cleared");
+			
+			JOptionPane.showMessageDialog(null, "Customer deleted!");
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Customer could not be deleted!");
+			return false;
+		}
+	}
+
+	// Edit the data of the current person in the database
+	private boolean editPerson(String first, String last, String street, String city, String state, String zip, int isMembr) throws SQLException {
+		stmt = conn.prepareStatement("UPDATE CUSTOMER_DATA SET `First`=?, `Last`=?, `Street`=?, `City`=?, `State`=?, `Zip`=?, `IsClubMember`=? WHERE `idCustomer`=?");
+		stmt.setString(1, first);
+		stmt.setString(2, last);
+		stmt.setString(3, street);
+		stmt.setString(4, city);
+		stmt.setString(5, state);
+		stmt.setString(6, zip);
+		stmt.setInt(7, isMembr);
+		stmt.setInt(8, curPerson);
+		try {
+			stmt.executeUpdate();
+			JOptionPane.showMessageDialog(null, "Customer updated!");
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Customer could not be updated!");
+			return false;
+		}
+	}
+	
+	// Finds the given number in the database and returns its id
+	private int findPhone(String phone) throws SQLException {
+		stmt = conn.prepareStatement("SELECT idPhone, PhoneNum FROM PHONE WHERE PhoneNum = ?");
+		stmt.setString(1, phone);
+		ResultSet rs = stmt.executeQuery();
+		if (rs.next()) { // If any entries found...
+			return rs.getInt("idPhone");
+		} else {
+			return -1;
+		}
+	}
+	
+	// Finds the given email in the database and returns its id
+	private int findEmail(String email) throws SQLException {
+		stmt = conn.prepareStatement("SELECT idEmail, EmailAddr FROM EMAIL WHERE EmailAddr = ?");
+		stmt.setString(1, email);
+		ResultSet rs = stmt.executeQuery();
+		if (rs.next()) { // If any entries found...
+			return rs.getInt("idEmail");
+		} else {
+			return -1;
+		}
+	}
+	
+	// Adds the connection between the customer_data table and the phone table
+	private void addPhoneHas(int id) throws SQLException {
+		stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA_HAS_PHONE(CUSTOMER_DATA_idCustomer, PHONE_idPhone) VALUES(?,?)");
+		stmt.setInt(1, curPerson);
+		stmt.setInt(2, id);
+		stmt.executeUpdate();
+	}
+	
+	// Adds the connection between the customer_data table and the phone table
+	private void addEmailHas(int id) throws SQLException {
+		stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA_HAS_EMAIL(CUSTOMER_DATA_idCustomer, EMAIL_idEmail) VALUES(?,?)");
+		stmt.setInt(1, curPerson);
+		stmt.setInt(2, id);
+		stmt.executeUpdate();
+	}
+
+	// Adds a phone to the current person in the database
+	private boolean addPhone(String phone) throws SQLException {
+		try {
+			int PhoneID = findPhone(phone);
+			if (PhoneID < 0) { // Phone not in the database, so add it
+				stmt = conn.prepareStatement("INSERT INTO PHONE(PhoneNum) VALUES(?)");
+				stmt.setString(1, phone);
+				stmt.executeUpdate();
+				PhoneID = findPhone(phone);
+			}
+			addPhoneHas(PhoneID);
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Phone could not be added!");
+			return false;
+		}
+		JOptionPane.showMessageDialog(null, "Phone added!");
+		findPerson(firstTF.getText(), lastTF.getText()); // Reset the form data
+		return true;
+	}
+
+	// Adds a email to the current person in the database
+	private boolean addEmail(String email) throws SQLException {
+		try {
+			int emailID = findEmail(email);
+			if (emailID < 0) { // Email not in the database, so add it
+				stmt = conn.prepareStatement("INSERT INTO EMAIL(EmailAddr) VALUES(?)");
+				stmt.setString(1, email);
+				stmt.executeUpdate();
+				emailID = findEmail(email);
+			}
+			addEmailHas(emailID);
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Email could not be added!");
+			return false;
+		}
+		JOptionPane.showMessageDialog(null, "Email added!");
+		findPerson(firstTF.getText(), lastTF.getText()); // Reset the form data
+		return true;
+	}
+	
+	// Edits the current phone
+	private boolean editPhone() {
+		try {
+			int PhoneID = findPhone(curPhone);
+			stmt = conn.prepareStatement("UPDATE PHONE SET `PhoneNum`=? WHERE `idPhone`=?");
+			stmt.setString(1, curPhoneTF.getText());
+			stmt.setInt(2, PhoneID);
+			stmt.executeUpdate();
+			JOptionPane.showMessageDialog(null, "Phone updated!");
+			findPerson(firstTF.getText(), lastTF.getText()); // Reset the form data
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Phone could not be updated!");
+			return false;
+		}
+	}
+	
+	// Edits the current email
+	private boolean editEmail() {
+		try {
+			int EmailID = findEmail(curEmail);
+			stmt = conn.prepareStatement("UPDATE EMAIL SET `EmailAddr`=? WHERE `idEmail`=?");
+			stmt.setString(1, curEmailTF.getText());
+			stmt.setInt(2, EmailID);
+			stmt.executeUpdate();
+			JOptionPane.showMessageDialog(null, "Email updated!");
+			findPerson(firstTF.getText(), lastTF.getText()); // Reset the form data
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Email could not be updated!");
+			return false;
+		}
+	}
+	
+	// Deletes the current phone
+	private boolean delPhone(boolean print) {
+		try {
+			int PhoneID = findPhone(curPhoneTF.getText());
+			stmt = conn.prepareStatement("DELETE FROM PHONE WHERE `idPhone`=?");
+			stmt.setInt(1, PhoneID);
+			stmt.executeUpdate();
+			if (print) JOptionPane.showMessageDialog(null, "Phone deleted!");
+			findPerson(firstTF.getText(), lastTF.getText()); // Reset the form data
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Phone could not be deleted!");
+			return false;
+		}
+	}
+	
+	// Deletes the current phone
+	private boolean delEmail(boolean print) {
+		try {
+			int EmailID = findEmail(curEmailTF.getText());
+			stmt = conn.prepareStatement("DELETE FROM EMAIL WHERE `idEmail`=?");
+			stmt.setInt(1, EmailID);
+			stmt.executeUpdate();
+			System.err.println("DELETING "+curEmail);
+			if (print) JOptionPane.showMessageDialog(null, "Email deleted!");
+			findPerson(firstTF.getText(), lastTF.getText()); // Reset the form data
+			return true;
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(null, "Error: Email could not be deleted!");
+			return false;
+		}
+	}
+	
 	// LISTENERS
 
 	// Handles the buttons associated with the Name field
@@ -224,7 +554,7 @@ public class CustomerPanel
 			String state = stateTF.getText();
 			String zip = zipTF.getText();
 			Boolean clubBool = isMemberChkBx.isSelected();
-			int isClubMember = clubBool.compareTo(false);
+			int isClubMember = clubBool.compareTo(false); // convert boolean to int
 
 			if (first.trim().equals("") || last.trim().equals("")) { // Don't allow blank names (NOT NULL)
 				JOptionPane.showMessageDialog(null, "Name cannot be blank!");
@@ -236,34 +566,27 @@ public class CustomerPanel
 			try {
 				// If the Add button was pressed...
 				if (buttonText.equals("Add")) {
-					// Add a person with the name to the database
-					stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA(First, Last, Street, City, State, Zip, IsClubMember) VALUES(?,?,?,?,?,?,?)");
-					stmt.setString(1, first);
-					stmt.setString(2, last);
-					stmt.setString(3, street);
-					stmt.setString(4, city);
-					stmt.setString(5, state);
-					stmt.setString(6, zip);
-					stmt.setInt(7, isClubMember);
-					stmt.executeUpdate();
+					addPerson(first, last, street, city, state, zip, isClubMember);
 				
 				// If the Find button was pressed...
 				} else if (buttonText.equals("Find")) { 
-					/*if (findPerson(name)) {
-						findPhones();
-					}*/
+					findPerson(first, last);
 
 				// If the Delete button was pressed...
 				} else if (buttonText.equals("Delete")) {
-					if (!curPerson.equals("")) {
-						//deletePerson();
+					if (curPerson > 0) {
+						delPerson();
 					} else {
-						JOptionPane.showMessageDialog(null, "Find a person first!");
+						JOptionPane.showMessageDialog(null, "Error: Find a person first!");
 					}
 					
 				// If the Edit button was pressed...
 				} else if (buttonText.equals("Edit")) {
-					
+					if (curPerson > 0) {
+						editPerson(first, last, street, city, state, zip, isClubMember);
+					} else {
+						JOptionPane.showMessageDialog(null, "Error: Find a person first!");
+					}
 				}
 			} catch (SQLException e1) { // Handle Errors
 				e1.printStackTrace();
@@ -272,45 +595,48 @@ public class CustomerPanel
 		}
 	}
 
-/*	// Handles the buttons associated with the Phone field
+	// Handles the buttons associated with the Phone field
 	private class PhoneListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-			String newphone = newPhoneTF.getText(); // Get the Phone
-
-			if (newphone.trim().equals("") || newphone.equals("")) { // Don't allow blank entries
-				JOptionPane.showMessageDialog(null, "Phone cannot be blank!");
+			if (curPerson < 0) { // Make sure we have a person to add the phone to
+				JOptionPane.showMessageDialog(null, "Find a person first!");
 				return;
-			} else if (!newphone.matches("\\d{3}-\\d{3}-\\d{4}")) { // Make sure a valid phone number was entered
-				JOptionPane.showMessageDialog(null, "Phone number must be in valid format (xxx-xxx-xxxx)!");
-			}
+			} 
 			
 			// Do different actions depending on which button was pressed
 			String buttonText = ((JButton)e.getSource()).getText();
 			try {
 				// If the Add button was pressed...
 				if (buttonText.equals("Add")) {
-					if (!curPerson.equals("")) { // Make sure we have a person to add the phone to
-						stmt.executeUpdate("INSERT INTO PHONE(Name, Phone, NumType) VALUES('"+curPerson+"','"+phone+"','"+type.getText()+"')");
-						
-						// Update the output with the newly added phone number
-						findPerson(curPerson);
-						findPhones();
-					} else { // Error
-						JOptionPane.showMessageDialog(null, "Find a person or phone first!");
+					String newphone = newPhoneTF.getText(); // Get the New Phone input
+					// Don't allow blank or invalid phone numbers
+					if (newphone.trim().equals("") || newphone.equals("")) {
+						JOptionPane.showMessageDialog(null, "New Phone cannot be blank!");
+						return;
+					} else if (!newphone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+						JOptionPane.showMessageDialog(null, "New Phone number must be in valid format (xxx-xxx-xxxx)!");
+						return;
 					}
+					addPhone(newphone);
 					
-				// If the Find button was pressed...
-				} else if (buttonText.equals("Find")) { 
-					if (findNum(phone)) {
-						findPhones();
+				} else {
+					String curphone = curPhoneTF.getText(); // Get the Current Phone input
+					// Don't allow blank or invalid phone numbers
+					if (curphone.trim().equals("") || curphone.equals("")) {
+						JOptionPane.showMessageDialog(null, "Current Phone cannot be blank!");
+						return;
+					} else if (!curphone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+						JOptionPane.showMessageDialog(null, "Current Phone number must be in valid format (xxx-xxx-xxxx)!");
+						return;
 					}
-
-				// If the Delete button was pressed...
-				} else if (buttonText.equals("Delete")) {
-					if (!curPerson.equals("")) {
-						deletePhone(phone);
-					} else {
-						JOptionPane.showMessageDialog(null, "Find a person or phone first!");
+					// If the Edit button was pressed...
+					if (buttonText.equals("Edit")) { 
+						
+						editPhone();
+	
+					// If the Delete button was pressed...
+					} else if (buttonText.equals("Delete")) {
+						delPhone(true);
 					}
 				}
 			} catch (SQLException e1) { // Handle Errors
@@ -319,55 +645,150 @@ public class CustomerPanel
 		}
 	}
 
-	// Handles the right arrow button
-	private class LeftListener implements ActionListener {
+	// Handles the right phone arrow button
+	private class LeftPhoneListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			try {
-				if (nameSet.previous()) { // If another name exists...
-					curPerson = nameSet.getString(1);
-					dispTA.setText(curPerson + "\n"); // Output the name
-					findPhones(); // Output the associated phone numbers
+				if (phoneSet.previous()) { // If another name exists...
+					curPhone = phoneSet.getString(1);
+					curPhoneTF.setText(curPhone); // Output the name
 				}
 				
 				// Reset the other arrow button if it's disable
-				if (!rightBtn.isEnabled()) {
-					rightBtn.setEnabled(true);
+				if (!rightPhoneBtn.isEnabled()) {
+					rightPhoneBtn.setEnabled(true);
 				}
 				
 				// Disable the button if the end of the result set is reached
-				if (nameSet.isFirst()) {
-					leftBtn.setEnabled(false);
+				if (phoneSet.isFirst()) {
+					leftPhoneBtn.setEnabled(false);
 				}
 			} catch (SQLException e1) {
-				System.err.println("LeftListener Error");
+				System.err.println("LeftPhoneListener Error");
 			}
 		}
 	}
 
-	// Handles the right arrow button
-	private class RightListener implements ActionListener {
+	// Handles the right phone arrow button
+	private class RightPhoneListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			try {
-				if (nameSet.next()) { // If another name exists...
-					curPerson = nameSet.getString(1);
-					dispTA.setText(curPerson + "\n"); // Output the name
-					findPhones(); // Output the associated phone numbers
+				if (phoneSet.next()) { // If another phone exists...
+					curPhone = phoneSet.getString(1);
+					curPhoneTF.setText(curPhone); // Output the phone
 
 					// Reset the other arrow button if it's disable
-					if (!leftBtn.isEnabled()) {
-						leftBtn.setEnabled(true);
+					if (!leftPhoneBtn.isEnabled()) {
+						leftPhoneBtn.setEnabled(true);
 					}
 					
 					// Disable the button if the end of the result set is reached
-					if (nameSet.isLast()) {
-						rightBtn.setEnabled(false);
+					if (phoneSet.isLast()) {
+						rightPhoneBtn.setEnabled(false);
 					}
 				}
 			} catch (SQLException e1) {
-				System.err.println("RightListener Error");
+				System.err.println("RightPhoneListener Error");
 			}
 		}
 	}
-*/
+
+	// Handles the buttons associated with the Email field
+	private class EmailListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			if (curPerson < 0) { // Make sure we have a person to add the phone to
+				JOptionPane.showMessageDialog(null, "Find a person first!");
+				return;
+			} 
+			
+			// Do different actions depending on which button was pressed
+			String buttonText = ((JButton)e.getSource()).getText();
+			try {
+				// If the Add button was pressed...
+				if (buttonText.equals("Add")) {
+					String newEmail = newEmailTF.getText(); // Get the New Email input
+					// Don't allow blank or invalid email addresses
+					if (newEmail.trim().equals("") || newEmail.equals("")) {
+						JOptionPane.showMessageDialog(null, "New Email cannot be blank!");
+						return;
+					} else if (!newEmail.matches(".+@.+\\.[a-z]+")) {
+						JOptionPane.showMessageDialog(null, "New Email must be in a valid format!");
+						return;
+					}
+					addEmail(newEmail);
+					
+				} else {
+					String curEmail = curEmailTF.getText(); // Get the Current Email input
+					// Don't allow blank or invalid email addresses
+					if (curEmail.trim().equals("") || curEmail.equals("")) {
+						JOptionPane.showMessageDialog(null, "Current Email cannot be blank!");
+						return;
+					} else if (!curEmail.matches(".+@.+\\.[a-z]+")) {
+						JOptionPane.showMessageDialog(null, "Current Email must be in a valid format!");
+						return;
+					}
+					// If the Edit button was pressed...
+					if (buttonText.equals("Edit")) { 
+						editEmail();
+	
+					// If the Delete button was pressed...
+					} else if (buttonText.equals("Delete")) {
+						delEmail(true);
+					}
+				}
+			} catch (SQLException e1) { // Handle Errors
+				JOptionPane.showMessageDialog(null, "Database Error!");
+			}
+		}
+	}
+
+	// Handles the right email arrow button
+	private class LeftEmailListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			try {
+				if (emailSet.previous()) { // If another email exists...
+					curEmail = emailSet.getString(1);
+					curEmailTF.setText(curEmail); // Output the email
+				}
+				
+				// Reset the other arrow button if it's disable
+				if (!rightEmailBtn.isEnabled()) {
+					rightEmailBtn.setEnabled(true);
+				}
+				
+				// Disable the button if the end of the result set is reached
+				if (emailSet.isFirst()) {
+					leftEmailBtn.setEnabled(false);
+				}
+			} catch (SQLException e1) {
+				System.err.println("LeftEmailListener Error");
+			}
+		}
+	}
+
+	// Handles the right email arrow button
+	private class RightEmailListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			try {
+				if (emailSet.next()) { // If another email exists...
+					curEmail = emailSet.getString(1);
+					curEmailTF.setText(curEmail); // Output the email
+
+					// Reset the other arrow button if it's disable
+					if (!leftEmailBtn.isEnabled()) {
+						leftEmailBtn.setEnabled(true);
+					}
+					
+					// Disable the button if the end of the result set is reached
+					if (emailSet.isLast()) {
+						rightEmailBtn.setEnabled(false);
+					}
+				}
+			} catch (SQLException e1) {
+				System.err.println("RightEmailListener Error");
+			}
+		}
+	}
+
 }
 
