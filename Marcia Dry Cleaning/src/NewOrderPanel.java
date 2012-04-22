@@ -6,6 +6,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,6 +27,10 @@ public class NewOrderPanel
 	private JTextArea dispTA;
 	private BasicArrowButton leftBtn;
 	private BasicArrowButton rightBtn;
+	private JTextField objectName;
+	private JList servicesList;
+	private JTextArea receipt;
+	private JScrollPane scrollReceipt;
 	
 	public NewOrderPanel(Connection conn)
 	{
@@ -136,17 +142,17 @@ public class NewOrderPanel
 		String[] data = getServices();
 		JPanel wp = new JPanel(); 
 		//wp.add(new JLabel("Object: "));
-		JTextField objectName = new JTextField(15);
+		objectName = new JTextField(15);
 		
 		JPanel objectInfo = new JPanel();
 		objectInfo.add(new JLabel("Object: "), BorderLayout.WEST);
 		objectInfo.add(objectName, BorderLayout.EAST);
 		
-		JList list = new JList(data); //data has type String[]
-		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		list.setLayoutOrientation(JList.VERTICAL);
-		list.setVisibleRowCount(-1);
-		JScrollPane listScroller = new JScrollPane(list);
+		servicesList = new JList(data); //data has type String[]
+		servicesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		servicesList.setLayoutOrientation(JList.VERTICAL);
+		servicesList.setVisibleRowCount(-1);
+		JScrollPane listScroller = new JScrollPane(servicesList);
 		//listScroller.setPreferredSize(new Dimension(10, 10));
 		//listScroller.setSize(10, 5);
 		wp.setLayout(new GridLayout(2, 1));
@@ -160,14 +166,47 @@ public class NewOrderPanel
 	public JPanel lilEastPanel() {
 		JPanel ep = new JPanel();
 		JButton add = new JButton("Add");
-		JTextArea receipt = new JTextArea(6, 15);
+		JButton clear = new JButton("Clear");
+		receipt = new JTextArea(4, 15);
 		receipt.enableInputMethods(false);
 		receipt.setEditable(false);
 		receipt.setLineWrap(true);
+		scrollReceipt = new JScrollPane(receipt);
+		//scrollReceipt.setSize(4, 8);
 		ep.add(add, BorderLayout.WEST);
-		ep.add(receipt, BorderLayout.EAST);
+		ep.add(clear, BorderLayout.SOUTH);
+		add.addActionListener(new addListener());
+		ep.add(scrollReceipt, BorderLayout.EAST);
 		return ep;
 	}
+	
+	private class addListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			String object = objectName.getText();
+			Object[] servicesO = servicesList.getSelectedValues();
+			String[] services = new String[servicesO.length];
+			for(int i = 0; i < servicesO.length; i++) {
+				services[i] = servicesO[i].toString();
+				//System.out.println(servicesO[i]);
+			}
+			if(object.equals("") || services.length == 0) {
+				JOptionPane.showMessageDialog(null, "You must have both an Object of clothing typed in and one or more services selected");
+			} else {
+				receiptBuilder(object, services);
+				
+			}
+		}
+	}
+	
+	public void receiptBuilder(String object, String[] services) {
+		receipt.append(object+"\n");
+		for(int i = 0; i < services.length; i++) {
+			receipt.append("    -"+services[i]+"\n");
+		}
+	}
+	
 	public JPanel buildNorthPanel() {
 		JPanel p = new JPanel();
 		p.add(buildNamePanel());
