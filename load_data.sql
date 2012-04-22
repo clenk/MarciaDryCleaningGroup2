@@ -80,10 +80,10 @@ INSERT INTO SERVICE_DATA(ServiceDescription, Price, TimeRequired) VALUES(
 );
 
 INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, Total, PaymentMethod, CUSTOMER_DATA_idCustomer) VALUES(
-    '2010-02-24 13:26:34','2010-02-24 ::','2010-02-25 13:33:54','','','','Visa','3'
+    '2010-02-24 13:26:34','2010-02-24 ::','2010-02-25 13:33:54','0.0','0.0','0.0','Visa','3'
 );
 INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, Total, PaymentMethod, CUSTOMER_DATA_idCustomer) VALUES(
-    '2011-11-10 09:12:58','2011-11-10 ::','2011-11-13 16:04:14','','','','Cash','2'
+    '2011-11-10 09:12:58','2011-11-10 ::','2011-11-13 16:04:14','0.0','0.0','0.0','Cash','2'
 );
 
 INSERT INTO ORDER_ITEM_DATA(ClothingDescription, Quantity, ORDER_DATA_OrderNumber) VALUES(
