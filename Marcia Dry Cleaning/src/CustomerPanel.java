@@ -146,7 +146,6 @@ public class CustomerPanel
 		JPanel curPhonesPanel = new JPanel();
 		curPhonesPanel.add(new JLabel("Current: "));
 		curPhoneTF = new JTextField(8);
-		curPhoneTF.setEditable(false);
 		curPhonesPanel.add(curPhoneTF);
 		leftPhoneBtn = new BasicArrowButton(SwingConstants.WEST);
 		leftPhoneBtn.addActionListener(new LeftPhoneListener());
@@ -187,7 +186,6 @@ public class CustomerPanel
 		JPanel curEmailsPanel = new JPanel();
 		curEmailsPanel.add(new JLabel("Current: "));
 		curEmailTF = new JTextField(12);
-		curEmailTF.setEditable(false);
 		curEmailsPanel.add(curEmailTF);
 		leftEmailBtn = new BasicArrowButton(SwingConstants.WEST);
 		leftEmailBtn.addActionListener(new LeftEmailListener());
@@ -481,7 +479,7 @@ public class CustomerPanel
 		try {
 			int PhoneID = findPhone(curPhone);
 			stmt = conn.prepareStatement("UPDATE PHONE SET `PhoneNum`=? WHERE `idPhone`=?");
-			stmt.setString(1, newPhoneTF.getText());
+			stmt.setString(1, curPhoneTF.getText());
 			stmt.setInt(2, PhoneID);
 			stmt.executeUpdate();
 			JOptionPane.showMessageDialog(null, "Phone updated!");
@@ -498,7 +496,7 @@ public class CustomerPanel
 		try {
 			int EmailID = findEmail(curEmail);
 			stmt = conn.prepareStatement("UPDATE EMAIL SET `EmailAddr`=? WHERE `idEmail`=?");
-			stmt.setString(1, newEmailTF.getText());
+			stmt.setString(1, curEmailTF.getText());
 			stmt.setInt(2, EmailID);
 			stmt.executeUpdate();
 			JOptionPane.showMessageDialog(null, "Email updated!");
@@ -513,7 +511,7 @@ public class CustomerPanel
 	// Deletes the current phone
 	private boolean delPhone(boolean print) {
 		try {
-			int PhoneID = findPhone(curPhone);
+			int PhoneID = findPhone(curPhoneTF.getText());
 			stmt = conn.prepareStatement("DELETE FROM PHONE WHERE `idPhone`=?");
 			stmt.setInt(1, PhoneID);
 			stmt.executeUpdate();
@@ -529,7 +527,7 @@ public class CustomerPanel
 	// Deletes the current phone
 	private boolean delEmail(boolean print) {
 		try {
-			int EmailID = findEmail(curEmail);
+			int EmailID = findEmail(curEmailTF.getText());
 			stmt = conn.prepareStatement("DELETE FROM EMAIL WHERE `idEmail`=?");
 			stmt.setInt(1, EmailID);
 			stmt.executeUpdate();
@@ -600,33 +598,46 @@ public class CustomerPanel
 	// Handles the buttons associated with the Phone field
 	private class PhoneListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-			String newphone = newPhoneTF.getText(); // Get the Phone input
-			
 			if (curPerson < 0) { // Make sure we have a person to add the phone to
 				JOptionPane.showMessageDialog(null, "Find a person first!");
 				return;
-			} else if (newphone.trim().equals("") || newphone.equals("")) { // Don't allow blank entries
-				JOptionPane.showMessageDialog(null, "Phone cannot be blank!");
-				return;
-			} else if (!newphone.matches("\\d{3}-\\d{3}-\\d{4}")) { // Make sure a valid phone number was entered
-				JOptionPane.showMessageDialog(null, "Phone number must be in valid format (xxx-xxx-xxxx)!");
-				return;
-			}
+			} 
 			
 			// Do different actions depending on which button was pressed
 			String buttonText = ((JButton)e.getSource()).getText();
 			try {
 				// If the Add button was pressed...
 				if (buttonText.equals("Add")) {
+					String newphone = newPhoneTF.getText(); // Get the New Phone input
+					// Don't allow blank or invalid phone numbers
+					if (newphone.trim().equals("") || newphone.equals("")) {
+						JOptionPane.showMessageDialog(null, "New Phone cannot be blank!");
+						return;
+					} else if (!newphone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+						JOptionPane.showMessageDialog(null, "New Phone number must be in valid format (xxx-xxx-xxxx)!");
+						return;
+					}
 					addPhone(newphone);
 					
-				// If the Edit button was pressed...
-				} else if (buttonText.equals("Edit")) { 
-					editPhone();
-
-				// If the Delete button was pressed...
-				} else if (buttonText.equals("Delete")) {
-					delPhone(true);
+				} else {
+					String curphone = curPhoneTF.getText(); // Get the Current Phone input
+					// Don't allow blank or invalid phone numbers
+					if (curphone.trim().equals("") || curphone.equals("")) {
+						JOptionPane.showMessageDialog(null, "Current Phone cannot be blank!");
+						return;
+					} else if (!curphone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+						JOptionPane.showMessageDialog(null, "Current Phone number must be in valid format (xxx-xxx-xxxx)!");
+						return;
+					}
+					// If the Edit button was pressed...
+					if (buttonText.equals("Edit")) { 
+						
+						editPhone();
+	
+					// If the Delete button was pressed...
+					} else if (buttonText.equals("Delete")) {
+						delPhone(true);
+					}
 				}
 			} catch (SQLException e1) { // Handle Errors
 				JOptionPane.showMessageDialog(null, "Database Error!");
@@ -685,33 +696,45 @@ public class CustomerPanel
 	// Handles the buttons associated with the Email field
 	private class EmailListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-			String newEmail = newEmailTF.getText(); // Get the Email input
-			
 			if (curPerson < 0) { // Make sure we have a person to add the phone to
 				JOptionPane.showMessageDialog(null, "Find a person first!");
 				return;
-			} else if (newEmail.trim().equals("") || newEmail.equals("")) { // Don't allow blank entries
-				JOptionPane.showMessageDialog(null, "Email cannot be blank!");
-				return;
-			} else if (!newEmail.matches(".+@.+\\.[a-z]+")) { // Make sure a valid email address was entered
-				JOptionPane.showMessageDialog(null, "Email must be in a valid format!");
-				return;
-			}
+			} 
 			
 			// Do different actions depending on which button was pressed
 			String buttonText = ((JButton)e.getSource()).getText();
 			try {
 				// If the Add button was pressed...
 				if (buttonText.equals("Add")) {
+					String newEmail = newEmailTF.getText(); // Get the New Email input
+					// Don't allow blank or invalid email addresses
+					if (newEmail.trim().equals("") || newEmail.equals("")) {
+						JOptionPane.showMessageDialog(null, "New Email cannot be blank!");
+						return;
+					} else if (!newEmail.matches(".+@.+\\.[a-z]+")) {
+						JOptionPane.showMessageDialog(null, "New Email must be in a valid format!");
+						return;
+					}
 					addEmail(newEmail);
 					
-				// If the Edit button was pressed...
-				} else if (buttonText.equals("Edit")) { 
-					editEmail();
-
-				// If the Delete button was pressed...
-				} else if (buttonText.equals("Delete")) {
-					delEmail(true);
+				} else {
+					String curEmail = curEmailTF.getText(); // Get the Current Email input
+					// Don't allow blank or invalid email addresses
+					if (curEmail.trim().equals("") || curEmail.equals("")) {
+						JOptionPane.showMessageDialog(null, "Current Email cannot be blank!");
+						return;
+					} else if (!curEmail.matches(".+@.+\\.[a-z]+")) {
+						JOptionPane.showMessageDialog(null, "Current Email must be in a valid format!");
+						return;
+					}
+					// If the Edit button was pressed...
+					if (buttonText.equals("Edit")) { 
+						editEmail();
+	
+					// If the Delete button was pressed...
+					} else if (buttonText.equals("Delete")) {
+						delEmail(true);
+					}
 				}
 			} catch (SQLException e1) { // Handle Errors
 				JOptionPane.showMessageDialog(null, "Database Error!");
