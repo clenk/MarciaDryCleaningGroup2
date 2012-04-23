@@ -68,7 +68,7 @@ public class NewOrderPanel
 		c.weighty = 1;
 		c.gridy = 0;
 		NewOrderPanel.add(buildNorthPanel(), c);
-		c.weighty = 1;
+		c.weighty = 10;
 		c.gridy = 1;
 		NewOrderPanel.add(buildDisplayPanel(),c );
 		c.weighty = 50;
@@ -97,9 +97,9 @@ public class NewOrderPanel
 		//rightBtn.addActionListener(new RightListener());
 	//	bp.add(rightBtn);
 		JPanel p = new JPanel();
-		p.setLayout(new GridLayout(2, 1));
+		//p.setLayout(new GridLayout(2, 1));
 		p.add(tp);
-		p.add(bp);
+		//p.add(bp);
 		//leftBtn.setEnabled(false); if there are more to the left
 		//rightBtn.setEnabled(false); if there are more to the right
 		return p;
