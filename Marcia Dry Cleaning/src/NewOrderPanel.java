@@ -266,6 +266,7 @@ public class NewOrderPanel
 		public void actionPerformed(ActionEvent e)
 		{
 			clear();
+			runningTotal = 0.0;
 		}
 	}
 	// Clears the receipt text area
