@@ -5,6 +5,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
+import java.util.Date;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicArrowButton;
@@ -278,7 +280,17 @@ public class NewOrderPanel
 	{
 		public void actionPerformed(ActionEvent e)
 		{
+			// CHANGE THIS SQL!!!!!
+			stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA_HAS_PHONE(CUSTOMER_DATA_idCustomer, PHONE_idPhone) VALUES(?,?)");
+			stmt.setInt(1, curPerson);
+			stmt.setInt(2, id);
 			
+			Date currentDatetime = new Date(System.currentTimeMillis());
+			Timestamp droppedOff = new Timestamp(currentDatetime.getTime());
+			stmt.setTimestamp(2, droppedOff);
+			
+
+			stmt.executeUpdate();
 		}
 	}
 	
