@@ -5,6 +5,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
+import java.util.Date;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicArrowButton;
@@ -28,6 +30,7 @@ public class NewOrderPanel
 	private String[] pages = {""};
 	private boolean isClubMember;
 	private int customerID;
+	private double runningTotal;
 	
 	public NewOrderPanel(Connection conn)
 	{
@@ -165,6 +168,29 @@ public class NewOrderPanel
 		
 		return servicesArray;
 	}
+	
+	public double[] getPrices() {
+		int size = getServiceNumber();
+		double[] pricesArray = new double[size];
+		ResultSet priceInfo;
+		try
+		{
+			PreparedStatement priceLookup = conn.prepareStatement("SELECT Price FROM service_data");
+			priceInfo = priceLookup.executeQuery();
+			for(int i = 0; i < size; i++) {
+				if(priceInfo.next()) {
+					pricesArray[i] = priceInfo.getDouble(1);
+				}
+			}
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return pricesArray;
+	}
+	
 	public JPanel lilWestPanel() {
 		String[] data = getServices();
 		JPanel wp = new JPanel(); 
@@ -216,6 +242,7 @@ public class NewOrderPanel
 	{
 		public void actionPerformed(ActionEvent e)
 		{
+			double[] prices = getPrices();
 			if(customerID != 0) {
 				
 				String object = objectName.getText();
@@ -228,7 +255,7 @@ public class NewOrderPanel
 				if(object.equals("") || services.length == 0) {
 					JOptionPane.showMessageDialog(null, "You must have both an Object of clothing typed in and one or more services selected");
 				} else {
-					receiptBuilder(object, services);
+					receiptBuilder(object, services, prices);
 				}
 			} else {
 				JOptionPane.showMessageDialog(null, "You must have a customer selected to add an order!");
@@ -241,6 +268,7 @@ public class NewOrderPanel
 		public void actionPerformed(ActionEvent e)
 		{
 			clear();
+			runningTotal = 0.0;
 		}
 	}
 	// Clears the receipt text area
@@ -252,7 +280,17 @@ public class NewOrderPanel
 	{
 		public void actionPerformed(ActionEvent e)
 		{
+			// CHANGE THIS SQL!!!!!
+			stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA_HAS_PHONE(CUSTOMER_DATA_idCustomer, PHONE_idPhone) VALUES(?,?)");
+			stmt.setInt(1, curPerson);
+			stmt.setInt(2, id);
 			
+			Date currentDatetime = new Date(System.currentTimeMillis());
+			Timestamp droppedOff = new Timestamp(currentDatetime.getTime());
+			stmt.setTimestamp(2, droppedOff);
+			
+
+			stmt.executeUpdate();
 		}
 	}
 	
@@ -260,10 +298,11 @@ public class NewOrderPanel
 		
 	}
 	
-	public void receiptBuilder(String object, String[] services) {
+	public void receiptBuilder(String object, String[] services, double[] prices) {
 		receipt.append(object+"\n");
 		for(int i = 0; i < services.length; i++) {
 			receipt.append("    -"+services[i]+"\n");
+			runningTotal += prices[i];
 		}
 	}
 	
