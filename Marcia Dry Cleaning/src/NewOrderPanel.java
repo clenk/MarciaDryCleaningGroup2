@@ -5,7 +5,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -14,6 +19,7 @@ import javax.swing.plaf.basic.BasicArrowButton;
 
 public class NewOrderPanel 
 {
+	private LinkedList orderItems;
 	private JPanel NewOrderPanel = new JPanel();
 	private Connection conn;
 	private JTextField firstTF;
@@ -34,7 +40,9 @@ public class NewOrderPanel
 	private boolean isClubMember;
 	private int customerID;
 	private double runningTotal;
+	private double TAX = .07;
 	ResultSet peopleSet; // Holds all the people found
+
 	
 	public NewOrderPanel(Connection conn)
 	{
@@ -272,41 +280,145 @@ public class NewOrderPanel
 		public void actionPerformed(ActionEvent e)
 		{
 			clear();
-			runningTotal = 0.0;
 		}
 	}
 	// Clears the receipt text area
 	private void clear() {
 		receipt.setText("");
+		runningTotal = 0.0;
 	}
 
 	private class submitListener implements ActionListener
 	{
 		public void actionPerformed(ActionEvent e)
 		{
-			// CHANGE THIS SQL!!!!!
-			/*stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA_HAS_PHONE(CUSTOMER_DATA_idCustomer, PHONE_idPhone) VALUES(?,?)");
-			stmt.setInt(1, curPerson);
-			stmt.setInt(2, id);
-			
-			Date currentDatetime = new Date(System.currentTimeMillis());
-			Timestamp droppedOff = new Timestamp(currentDatetime.getTime());
-			stmt.setTimestamp(2, droppedOff);
-			
-
-			stmt.executeUpdate();*/
+			if(!receipt.equals("")) {
+				try
+				{
+					submitOrder();
+				} catch (SQLException e1)
+				{
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
 		}
 	}
 	
-	private void finalSubmit() {
+	
+	private void submitOrder() throws SQLException {
 		
+		Date currentDatetime = new Date(System.currentTimeMillis());
+		Timestamp droppedOff = new Timestamp(currentDatetime.getTime());
+		
+		//Date date = null;
+		//long time = date.getTime();
+		double priceTotal = runningTotal*TAX;
+		Timestamp promisedTime = null;
+		String[] services;
+		Iterator iterator = orderItems.iterator();
+		int serviceNum;
+		Timestamp timeReqd;
+		while (iterator.hasNext()) {
+			OrderItem item = (OrderItem) iterator.next();
+			int orderNum = getOrderNumber();
+			stmt = conn.prepareStatement("INSERT INTO ORDER_ITEM_DATA(ClothingDescription, Quantity, ORDER_DATA_OrderNumber) VALUES(?,?,?)");
+			stmt.setString(1, item.getName());
+			stmt.setInt(2, 1);
+			stmt.setInt(3, orderNum);
+			stmt.executeUpdate();
+			services = item.getServices();
+			for(int i = 0; i < services.length; i++) {
+				serviceNum = getServiceNumber(services[i]);
+				stmt = conn.prepareStatement("INSERT INTO ORDER_ITEM_DATA_has_SERVICE_DATA(ORDER_ITEM_DATA_idOrderItem, SERVICE_DATA_idService) VALUES(?,?)");
+				stmt.setInt(1, orderNum);
+				stmt.setInt(2, serviceNum);
+				timeReqd = getTime(serviceNum);
+				int min = timeReqd.getMinutes();
+				int hours = timeReqd.getHours();
+				
+				promisedTime = new Timestamp(droppedOff.getTime()+(long)(hours*60*60*1000)+(long)(min*60*1000));
+				//Timestamp plustwenty = new Timestamp(timestamp.getTime()+20*60*1000);
+			}
+		}
+		
+		stmt = conn.prepareStatement("INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, Price, Tax, Total, CUSTOMER_DATA_idCustomer) VALUES(?,?,?,?,?,?)");
+		stmt.setTimestamp(1, droppedOff);
+		stmt.setTimestamp(2, promisedTime);
+		stmt.setDouble(3, runningTotal);
+		stmt.setDouble(4, TAX);
+		stmt.setDouble(5, priceTotal);
+		stmt.setInt(6, customerID);
+		stmt.executeUpdate();
+		
+		String finalReceipt = "Date and Time Items Were Dropped Off: "+droppedOff+"\nDate and Time items will be ready: "
+		+"";
+		JOptionPane.showMessageDialog(null, "You must have first & last names OR phone number");
+		
+
+	}
+	private Timestamp getTime(int serviceNumber) {
+		Date currentDatetime = new Date(System.currentTimeMillis());
+		Timestamp timestamp =  new Timestamp(currentDatetime.getTime());
+		Timestamp ts = null;
+		try
+		{
+			stmt = conn.prepareStatement("SELECT TimeRequired FROM SERVICE_DATA WHERE idService = ?");
+			stmt.setInt(1, serviceNumber);
+			ResultSet rs = stmt.executeQuery();
+			if(rs.next()) {
+				ts = rs.getTimestamp(1);
+			}
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ts;
+	}
+	private int getServiceNumber(String service) {
+		int num = 0;
+		try
+		{
+			stmt = conn.prepareStatement("SELECT idService FROM service_data WHERE ServiceDescription = ?");
+			stmt.setString(1, service);
+			ResultSet rs = stmt.executeQuery();
+			if(rs.next()) {
+				num = rs.getInt(1);
+			}
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return num;
+	}
+	private int getOrderNumber() {
+		int num = 0;
+		try
+		{
+			stmt = conn.prepareStatement("SELECT MAX(OrderNumber) FROM ORDER_DATA");
+			ResultSet max = stmt.executeQuery();
+			if(max.next()) {
+				num = max.getInt(1);
+			}
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return num;
 	}
 	
 	public void receiptBuilder(String object, String[] services, double[] prices) {
+		orderItems = new LinkedList();
+		OrderItem oi = new OrderItem(object, services, prices);
+		orderItems.addLast(oi);
 		receipt.append(object+"\n");
 		for(int i = 0; i < services.length; i++) {
 			receipt.append("    -"+services[i]+"\n");
 			runningTotal += prices[i];
+			
 		}
 	}
 	
@@ -500,7 +612,6 @@ public class NewOrderPanel
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 		return rs;
 	}
 	
