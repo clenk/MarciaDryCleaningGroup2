@@ -41,7 +41,8 @@ public class NewOrderPanel
 	private int customerID;
 	private double runningTotal;
 	private double TAX = .07;
-	ResultSet peopleSet; // Holds all the people found
+	private ResultSet peopleSet; // Holds all the people found
+	private int itemCnt = 0;
 
 	
 	public NewOrderPanel(Connection conn)
@@ -134,15 +135,16 @@ public class NewOrderPanel
 		return servicesArray;
 	}
 	
-	public double[] getPrices() {
-		int size = getServiceNumber();
+	public double[] getPrices(String[] services) {
+		int size = services.length;
 		double[] pricesArray = new double[size];
 		ResultSet priceInfo;
 		try
 		{
-			PreparedStatement priceLookup = conn.prepareStatement("SELECT Price FROM service_data");
-			priceInfo = priceLookup.executeQuery();
 			for(int i = 0; i < size; i++) {
+				PreparedStatement priceLookup = conn.prepareStatement("SELECT Price FROM service_data WHERE ServiceDescription = ?");
+				priceLookup.setString(1, services[i]); 
+				priceInfo = priceLookup.executeQuery();
 				if(priceInfo.next()) {
 					pricesArray[i] = priceInfo.getDouble(1);
 				}
@@ -201,7 +203,6 @@ public class NewOrderPanel
 	{
 		public void actionPerformed(ActionEvent e)
 		{
-			double[] prices = getPrices();
 			if(customerID != 0) {
 				
 				String object = objectName.getText();
@@ -210,6 +211,7 @@ public class NewOrderPanel
 				for(int i = 0; i < servicesO.length; i++) {
 					services[i] = servicesO[i].toString();
 				}
+				double[] prices = getPrices(services);
 				if(object.equals("") || services.length == 0) {
 					JOptionPane.showMessageDialog(null, "You must have both an Object of clothing typed in and one or more services selected");
 				} else {
@@ -232,6 +234,7 @@ public class NewOrderPanel
 	private void clear() {
 		receipt.setText("");
 		runningTotal = 0.0;
+		itemCnt = 0;
 	}
 
 	private class submitListener implements ActionListener
@@ -353,10 +356,15 @@ public class NewOrderPanel
 		orderItems = new LinkedList();
 		OrderItem oi = new OrderItem(object, services, prices);
 		orderItems.addLast(oi);
+		itemCnt++;
 		receipt.append(object+"\n");
 		for(int i = 0; i < services.length; i++) {
 			receipt.append("    -"+services[i]+"\n");
-			runningTotal += prices[i];
+			double tempPrice = prices[i];
+			if (itemCnt == 10 && isClubMember) {
+				tempPrice /= 2; // 50% off for the 10th item
+			}
+			runningTotal += tempPrice;
 		}
 	}
 	
