@@ -1,21 +1,14 @@
 // Scott Hoelsema, Arthur Anderson, and Christopher Lenk
 // NewOrderPanel sets up the GUI for the "New Order" tab.
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
+import java.sql.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicArrowButton;
+
 
 public class NewOrderPanel 
 {
@@ -31,6 +24,10 @@ public class NewOrderPanel
 	private JList servicesList;
 	private JTextArea receipt;
 	private JScrollPane scrollReceipt;
+	private PreparedStatement stmt;
+	private String[] pages = {""};
+	private boolean isClubMember;
+	private int customerID;
 	
 	public NewOrderPanel(Connection conn)
 	{
@@ -41,13 +38,43 @@ public class NewOrderPanel
 		//JPanel p = new JPanel();
 		Border panelBorder = BorderFactory.createTitledBorder("New Order Stuff");
 		NewOrderPanel.setBorder(panelBorder);
-		NewOrderPanel.setLayout(new GridLayout(3, 1));
+		/*NewOrderPanel.setLayout(new GridLayout(3, 1));
 		NewOrderPanel.add(buildNorthPanel());
 		NewOrderPanel.add(buildDisplayPanel());
-		NewOrderPanel.add(buildSouthPanel());
+		NewOrderPanel.add(buildSouthPanel());*/
 		
+		/*GridBagLayout mainGBLayout = new GridBagLayout();
+		GridBagConstraints mainGBConsts = new GridBagConstraints();
+		NewOrderPanel.setLayout(mainGBLayout);
+		
+		mainGBConsts.gridx = 0;
+		mainGBConsts.gridy = 0;
+		mainGBConsts.gridwidth = 0;
+		mainGBConsts.gridheight = 0;
+		mainGBConsts.fill = GridBagConstraints.BOTH;
+		mainGBConsts.weightx = 0;
+		mainGBConsts.weighty = 0;
+		mainGBConsts.anchor = GridBagConstraints.NORTH;
+		mainGBLayout.setConstraints(buildNorthPanel(), mainGBConsts);
+		NewOrderPanel.add(buildNorthPanel());*/
 		
 		//NewOrderPanel.add(p);
+		
+		NewOrderPanel.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.anchor = GridBagConstraints.CENTER;
+		c.fill = GridBagConstraints.BOTH;
+		c.weightx = 2;
+		c.weighty = 1;
+		c.gridy = 0;
+		NewOrderPanel.add(buildNorthPanel(), c);
+		c.weighty = 10;
+		c.gridy = 1;
+		NewOrderPanel.add(buildDisplayPanel(),c );
+		c.weighty = 50;
+		c.gridy = 2;
+		NewOrderPanel.add(buildSouthPanel(),c );
+		
 		
 		
 		return NewOrderPanel;
@@ -56,23 +83,23 @@ public class NewOrderPanel
 		
 		
 		JPanel tp = new JPanel();
-		dispTA = new JTextArea(4, 36);
+		dispTA = new JTextArea(7, 36);
 		dispTA.enableInputMethods(false);
 		dispTA.setEditable(false);
-		dispTA.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+		dispTA.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 		JScrollPane sp = new JScrollPane(dispTA);
 		tp.add(sp);
 		JPanel bp = new JPanel();
 		leftBtn = new BasicArrowButton(SwingConstants.WEST);
 		//leftBtn.addActionListener(new LeftListener());
-		bp.add(leftBtn);
+	//	bp.add(leftBtn);
 		rightBtn = new BasicArrowButton(SwingConstants.EAST);
 		//rightBtn.addActionListener(new RightListener());
-		bp.add(rightBtn);
+	//	bp.add(rightBtn);
 		JPanel p = new JPanel();
-		p.setLayout(new GridLayout(2, 1));
+		//p.setLayout(new GridLayout(2, 1));
 		p.add(tp);
-		p.add(bp);
+		//p.add(bp);
 		//leftBtn.setEnabled(false); if there are more to the left
 		//rightBtn.setEnabled(false); if there are more to the right
 		return p;
@@ -145,8 +172,8 @@ public class NewOrderPanel
 		objectName = new JTextField(15);
 		
 		JPanel objectInfo = new JPanel();
-		objectInfo.add(new JLabel("Object: "), BorderLayout.WEST);
-		objectInfo.add(objectName, BorderLayout.EAST);
+		objectInfo.add(new JLabel("Object: ")/*, BorderLayout.WEST*/);
+		objectInfo.add(objectName/*, BorderLayout.EAST*/);
 		
 		servicesList = new JList(data); //data has type String[]
 		servicesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -155,11 +182,12 @@ public class NewOrderPanel
 		JScrollPane listScroller = new JScrollPane(servicesList);
 		//listScroller.setPreferredSize(new Dimension(10, 10));
 		//listScroller.setSize(10, 5);
-		wp.setLayout(new GridLayout(2, 1));
-		wp.add(objectInfo);
-		wp.add(listScroller/*, BorderLayout.SOUTH*/);
+		wp.setLayout(new BorderLayout());
+		wp.add(objectInfo, BorderLayout.PAGE_START);
+		wp.add(listScroller, BorderLayout.CENTER/*, BorderLayout.SOUTH*/);
 		//wp.add(objectName/*, BorderLayout.NORTH*/);
-		
+		wp.add(Box.createRigidArea(new Dimension(50,0)), BorderLayout.LINE_START);
+		wp.add(Box.createRigidArea(new Dimension(50,0)), BorderLayout.LINE_END);
 		
 		return wp;
 	}
@@ -167,15 +195,18 @@ public class NewOrderPanel
 		JPanel ep = new JPanel();
 		JButton add = new JButton("Add");
 		JButton clear = new JButton("Clear");
-		receipt = new JTextArea(4, 15);
+		JButton submit = new JButton("Submit");
+		receipt = new JTextArea(16, 25);
 		receipt.enableInputMethods(false);
 		receipt.setEditable(false);
 		receipt.setLineWrap(true);
 		scrollReceipt = new JScrollPane(receipt);
 		//scrollReceipt.setSize(4, 8);
-		ep.add(add, BorderLayout.WEST);
-		ep.add(clear, BorderLayout.SOUTH);
+		ep.add(add);
+		ep.add(clear);
+		ep.add(submit);
 		add.addActionListener(new addListener());
+		clear.addActionListener(new clearListener());
 		ep.add(scrollReceipt, BorderLayout.EAST);
 		return ep;
 	}
@@ -184,20 +215,37 @@ public class NewOrderPanel
 	{
 		public void actionPerformed(ActionEvent e)
 		{
-			String object = objectName.getText();
-			Object[] servicesO = servicesList.getSelectedValues();
-			String[] services = new String[servicesO.length];
-			for(int i = 0; i < servicesO.length; i++) {
-				services[i] = servicesO[i].toString();
-				//System.out.println(servicesO[i]);
-			}
-			if(object.equals("") || services.length == 0) {
-				JOptionPane.showMessageDialog(null, "You must have both an Object of clothing typed in and one or more services selected");
-			} else {
-				receiptBuilder(object, services);
+			if(customerID != 0) {
 				
+				String object = objectName.getText();
+				Object[] servicesO = servicesList.getSelectedValues();
+				String[] services = new String[servicesO.length];
+				for(int i = 0; i < servicesO.length; i++) {
+					services[i] = servicesO[i].toString();
+					//System.out.println(servicesO[i]);
+				}
+				if(object.equals("") || services.length == 0) {
+					JOptionPane.showMessageDialog(null, "You must have both an Object of clothing typed in and one or more services selected");
+				} else {
+					receiptBuilder(object, services);
+				}
+			} else {
+				JOptionPane.showMessageDialog(null, "You must have a customer selected to add an order!");
 			}
 		}
+	}
+
+	private class clearListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			clear();
+		}
+	}
+	
+	// Clears the receipt text area
+	private void clear() {
+		receipt.setText("");
 	}
 	
 	public void receiptBuilder(String object, String[] services) {
@@ -216,10 +264,109 @@ public class NewOrderPanel
 	public JPanel buildNameBtnPanel(){
 		JPanel p = new JPanel();
 		JButton findBtn = new JButton("Find");
-		//findBtn.addActionListener(new NameFindListener());
+		findBtn.addActionListener(new FindListener());
 		p.add(findBtn);
 		return p;
 	}
+	
+	private class FindListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			
+			dispTA.setText("");
+			String first = firstTF.getText();
+			String last = lastTF.getText();
+			String phone = phoneTF.getText();
+			int clubMem;
+			
+			//System.out.println(phone);
+			ResultSet rs = null;
+			if(!first.equals("") && !last.equals("")) {
+				rs = nameQuery(first, last);
+			} else if(!phone.equals(null)){
+				rs = phoneQuery(phone);
+			} else {
+				JOptionPane.showMessageDialog(null, "You must have first & last names OR phone number");
+			}
+			
+			try
+			{
+				pages = extractStringData(rs);
+				rs.beforeFirst();
+				rs.next();
+				customerID = rs.getInt("idCustomer");
+				clubMem = rs.getInt("isClubMember");
+				if(clubMem == 1) {
+					isClubMember = true;
+				} else {
+					isClubMember = false;
+				}
+			} catch (Exception e1)
+			{
+				e1.printStackTrace();
+			}
+			dispTA.append(pages[0]);
+			
+		}
+	}
+	
+	public String[] extractStringData(ResultSet rs) throws Exception {
+	
+		String allData = "";
+		String first = "";
+		String last = "";
+		rs.beforeFirst();
+		while(rs.next()) {
+			if(!first.equals(rs.getString("First")) && !last.equals(rs.getString("Last"))) {
+				first = rs.getString("First");
+				last = rs.getString("Last");
+				allData += "%"+first + " "+last;
+				allData += "\n"+rs.getString("Street");
+				allData += "\n"+rs.getString("City")+", "+rs.getString("State")+" "+rs.getString("Zip");
+			}
+		}
+		return allData.substring(allData.indexOf("%")+1).split("%");
+		
+	}
+	
+	public ResultSet nameQuery(String first, String last) {
+		ResultSet rs = null;
+		try
+		{
+			stmt = conn.prepareStatement("SELECT * FROM CUSTOMER_DATA WHERE FIRST = ? and LAST = ?");
+			stmt.setString(1, first);
+			stmt.setString(2, last);
+			rs = stmt.executeQuery();
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		return rs;
+	}
+	
+	public ResultSet phoneQuery(String phone) {
+		ResultSet rs = null;
+		try
+		{
+			stmt = conn.prepareStatement("select idCustomer, First, Last, Street, City, State, Zip, isClubMember from customer_data, customer_data_has_phone, phone where customer_data.idCustomer = customer_data_has_phone.CUSTOMER_DATA_idCustomer && customer_data_has_phone.PHONE_idPhone = phone.idPhone && phone.phoneNum = ?");
+			stmt.setString(1, phone);
+			rs = stmt.executeQuery();
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return rs;
+	}
+	
+	
+	
+	
 	public JPanel buildNamePanel() {
 		JPanel p = new JPanel();
 		p.setLayout(new GridLayout(3, 1));

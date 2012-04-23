@@ -30,7 +30,7 @@ public class PickUpOrderPanel
 	private JPanel PickUpOrderPanel = new JPanel(new BorderLayout());
 	private Connection conn;
 	private JTextArea dispTA = new JTextArea(7, 40);;
-	private JPanel searchPanel = new JPanel(new GridLayout(4,3));
+	private JPanel searchPanel = new JPanel(new GridLayout(4,3,10,8));
 	private JPanel displayPanel = new JPanel(new BorderLayout());
 	private JPanel confirmPanel = new JPanel();
 	private JTextField firstName = new JTextField(15);
