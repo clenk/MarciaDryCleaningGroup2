@@ -207,6 +207,7 @@ public class NewOrderPanel
 		ep.add(submit);
 		add.addActionListener(new addListener());
 		clear.addActionListener(new clearListener());
+		submit.addActionListener(new submitListener());
 		ep.add(scrollReceipt, BorderLayout.EAST);
 		return ep;
 	}
@@ -242,10 +243,21 @@ public class NewOrderPanel
 			clear();
 		}
 	}
-	
 	// Clears the receipt text area
 	private void clear() {
 		receipt.setText("");
+	}
+
+	private class submitListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			
+		}
+	}
+	
+	private void finalSubmit() {
+		
 	}
 	
 	public void receiptBuilder(String object, String[] services) {
