@@ -29,7 +29,7 @@ public class PickUpOrderPanel
 {
 	private JPanel PickUpOrderPanel = new JPanel(new BorderLayout());
 	private Connection conn;
-	private JTextArea dispTA;
+	private JTextArea dispTA = new JTextArea(7, 40);;
 	private JPanel searchPanel = new JPanel(new GridLayout(4,3));
 	private JPanel displayPanel = new JPanel(new BorderLayout());
 	private JPanel confirmPanel = new JPanel();
@@ -89,11 +89,10 @@ public class PickUpOrderPanel
 		
 		
 	public void buildDisplayPanel()
-	{
+	{		
 		Border centerBorder = BorderFactory.createTitledBorder("Order Information:");
 		displayPanel.setBorder(centerBorder);
 		
-		dispTA = new JTextArea(7, 40);
 		dispTA.enableInputMethods(false);
 		dispTA.setEditable(false);
 		JPanel bp = new JPanel();
@@ -223,6 +222,16 @@ public class PickUpOrderPanel
 			
 			try 
 			{
+				PreparedStatement checkIfPickedUp = conn.prepareStatement("SELECT * FROM order_data WHERE OrderNumber = ?");
+				checkIfPickedUp.setInt(1, activeOrderID);
+				ResultSet order = checkIfPickedUp.executeQuery();
+				order.next();
+				if(!order.getString("DatePickedUp").equals("null"))
+				{
+					JOptionPane.showMessageDialog(null, "Order already picked up!");
+					return;
+				}
+				
 				PreparedStatement pickUpOrderSubmit = conn.prepareStatement("UPDATE order_data SET PaymentMethod = ?, DatePickedUp = ? WHERE OrderNumber = ?");
 				String paymentMethod = (String) paymentOptions.getSelectedItem();
 				pickUpOrderSubmit.setString(1, paymentMethod);
@@ -240,7 +249,45 @@ public class PickUpOrderPanel
 			{
 				e1.printStackTrace();
 			}
+			dispTA.setText("");
 			
+			try 
+			{
+				PreparedStatement orderIDLookup = conn.prepareStatement("SELECT * FROM order_data WHERE OrderNumber = ?");
+				orderIDLookup.setInt(1, activeOrderID);
+				ResultSet orderIDrs = orderIDLookup.executeQuery();
+				orderIDrs.next();
+				
+				StringBuilder sb = new StringBuilder();
+				sb.append("Order ID: ");
+				sb.append(activeOrderID);
+				sb.append("\n\nDate Dropped Off: ");
+				sb.append(orderIDrs.getString("DateDroppedOff"));
+				sb.append("\nDate Promised: ");
+				sb.append(orderIDrs.getString("DatePromised"));
+				sb.append("\nDate Picked Up: ");
+				sb.append(orderIDrs.getString("DatePickedUp"));
+				sb.append("\n\nPrice: ");
+				sb.append(orderIDrs.getString("Price"));
+				sb.append("\nTax: ");
+				sb.append(orderIDrs.getString("Tax"));
+				sb.append("\nTotal: ");
+				sb.append(orderIDrs.getString("Total"));
+				sb.append("\n\nPayment Method: ");
+				sb.append(orderIDrs.getString("PaymentMethod"));
+				
+				dispTA.append(sb.toString());				
+			} 
+			catch (SQLException e1) 
+			{
+				JOptionPane.showMessageDialog(null, "Enter a valid Order ID!");
+				return;
+			}
+			catch(NumberFormatException e1)
+			{
+				JOptionPane.showMessageDialog(null, "Enter a valid Order ID!");
+				return;
+			}
 		}
 		
 	}
