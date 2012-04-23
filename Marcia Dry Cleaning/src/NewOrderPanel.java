@@ -313,7 +313,7 @@ public class NewOrderPanel
 		
 		//Date date = null;
 		//long time = date.getTime();
-		double priceTotal = runningTotal*TAX;
+		double priceTotal = runningTotal+(runningTotal*TAX);
 		Timestamp promisedTime = null;
 		String[] services;
 		Iterator iterator = orderItems.iterator();
@@ -352,8 +352,8 @@ public class NewOrderPanel
 		stmt.executeUpdate();
 		
 		String finalReceipt = "Date and Time Items Were Dropped Off: "+droppedOff+"\nDate and Time items will be ready: "
-		+"";
-		JOptionPane.showMessageDialog(null, "You must have first & last names OR phone number");
+		+promisedTime+"\nTotal Price: $"+String.format("%.2f", priceTotal);
+		JOptionPane.showMessageDialog(null, finalReceipt);
 		
 
 	}
@@ -534,6 +534,7 @@ public class NewOrderPanel
 	}
 	
 	// Handles the right person arrow button
+	
 	private class RightPeopleListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			if (peopleSet == null) {
