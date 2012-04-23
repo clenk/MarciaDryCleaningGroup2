@@ -84,7 +84,18 @@ INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, T
     '2011-11-10 09:12:58','2011-11-10 ::','2011-11-13 16:04:14', null,null,null,'Cash',2);
 INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, Total, PaymentMethod, CUSTOMER_DATA_idCustomer) VALUES(
     '2011-11-10 09:12:58','2011-11-10 ::','2011-11-13 16:04:14','0.0','0.0','0.0','Cash','2');
-
+INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, Total, PaymentMethod, CUSTOMER_DATA_idCustomer) VALUES(
+    '2011-10-19 09:12:58','2011-11-10 ::',null, null,null,null,null,3);
+INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, Total, PaymentMethod, CUSTOMER_DATA_idCustomer) VALUES(
+    '2011-11-11 09:12:58','2011-11-10 ::',null, null,null,null,null,4);
+INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, Total, PaymentMethod, CUSTOMER_DATA_idCustomer) VALUES(
+    '2011-11-12 09:12:58','2011-11-10 ::',null, null,null,null,null,5);
+INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, Total, PaymentMethod, CUSTOMER_DATA_idCustomer) VALUES(
+    '2011-11-13 09:12:58','2011-11-10 ::',null, null,null,null,'Cash',5);
+INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, Total, PaymentMethod, CUSTOMER_DATA_idCustomer) VALUES(
+    '2011-11-14 09:12:58','2011-11-10 ::',null, null,null,null,'Cash',4);
+INSERT INTO ORDER_DATA(DateDroppedOff, DatePromised, DatePickedUp, Price, Tax, Total, PaymentMethod, CUSTOMER_DATA_idCustomer) VALUES(
+    '2011-11-15 09:12:58','2011-11-10 ::',null, null,null,null,'Cash',1);
 INSERT INTO ORDER_ITEM_DATA(ClothingDescription, Quantity, ORDER_DATA_OrderNumber) VALUES(
     'Blue Long-sleeved Formal Shirt','1','1'
 );
