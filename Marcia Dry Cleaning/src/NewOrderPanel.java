@@ -1,18 +1,10 @@
 // Scott Hoelsema, Arthur Anderson, and Christopher Lenk
 // NewOrderPanel sets up the GUI for the "New Order" tab.
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
+import java.sql.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicArrowButton;
@@ -41,13 +33,43 @@ public class NewOrderPanel
 		//JPanel p = new JPanel();
 		Border panelBorder = BorderFactory.createTitledBorder("New Order Stuff");
 		NewOrderPanel.setBorder(panelBorder);
-		NewOrderPanel.setLayout(new GridLayout(3, 1));
+		/*NewOrderPanel.setLayout(new GridLayout(3, 1));
 		NewOrderPanel.add(buildNorthPanel());
 		NewOrderPanel.add(buildDisplayPanel());
-		NewOrderPanel.add(buildSouthPanel());
+		NewOrderPanel.add(buildSouthPanel());*/
 		
+		/*GridBagLayout mainGBLayout = new GridBagLayout();
+		GridBagConstraints mainGBConsts = new GridBagConstraints();
+		NewOrderPanel.setLayout(mainGBLayout);
+		
+		mainGBConsts.gridx = 0;
+		mainGBConsts.gridy = 0;
+		mainGBConsts.gridwidth = 0;
+		mainGBConsts.gridheight = 0;
+		mainGBConsts.fill = GridBagConstraints.BOTH;
+		mainGBConsts.weightx = 0;
+		mainGBConsts.weighty = 0;
+		mainGBConsts.anchor = GridBagConstraints.NORTH;
+		mainGBLayout.setConstraints(buildNorthPanel(), mainGBConsts);
+		NewOrderPanel.add(buildNorthPanel());*/
 		
 		//NewOrderPanel.add(p);
+		
+		NewOrderPanel.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.anchor = GridBagConstraints.CENTER;
+		c.fill = GridBagConstraints.BOTH;
+		c.weightx = 2;
+		c.weighty = 1;
+		c.gridy = 0;
+		NewOrderPanel.add(buildNorthPanel(), c);
+		c.weighty = 1;
+		c.gridy = 1;
+		NewOrderPanel.add(buildDisplayPanel(),c );
+		c.weighty = 50;
+		c.gridy = 2;
+		NewOrderPanel.add(buildSouthPanel(),c );
+		
 		
 		
 		return NewOrderPanel;
@@ -145,8 +167,8 @@ public class NewOrderPanel
 		objectName = new JTextField(15);
 		
 		JPanel objectInfo = new JPanel();
-		objectInfo.add(new JLabel("Object: "), BorderLayout.WEST);
-		objectInfo.add(objectName, BorderLayout.EAST);
+		objectInfo.add(new JLabel("Object: ")/*, BorderLayout.WEST*/);
+		objectInfo.add(objectName/*, BorderLayout.EAST*/);
 		
 		servicesList = new JList(data); //data has type String[]
 		servicesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -155,11 +177,12 @@ public class NewOrderPanel
 		JScrollPane listScroller = new JScrollPane(servicesList);
 		//listScroller.setPreferredSize(new Dimension(10, 10));
 		//listScroller.setSize(10, 5);
-		wp.setLayout(new GridLayout(2, 1));
-		wp.add(objectInfo);
-		wp.add(listScroller/*, BorderLayout.SOUTH*/);
+		wp.setLayout(new BorderLayout());
+		wp.add(objectInfo, BorderLayout.PAGE_START);
+		wp.add(listScroller, BorderLayout.CENTER/*, BorderLayout.SOUTH*/);
 		//wp.add(objectName/*, BorderLayout.NORTH*/);
-		
+		wp.add(Box.createRigidArea(new Dimension(50,0)), BorderLayout.LINE_START);
+		wp.add(Box.createRigidArea(new Dimension(50,0)), BorderLayout.LINE_END);
 		
 		return wp;
 	}
@@ -167,15 +190,18 @@ public class NewOrderPanel
 		JPanel ep = new JPanel();
 		JButton add = new JButton("Add");
 		JButton clear = new JButton("Clear");
-		receipt = new JTextArea(4, 15);
+		JButton submit = new JButton("Submit");
+		receipt = new JTextArea(16, 25);
 		receipt.enableInputMethods(false);
 		receipt.setEditable(false);
 		receipt.setLineWrap(true);
 		scrollReceipt = new JScrollPane(receipt);
 		//scrollReceipt.setSize(4, 8);
-		ep.add(add, BorderLayout.WEST);
-		ep.add(clear, BorderLayout.SOUTH);
+		ep.add(add);
+		ep.add(clear);
+		ep.add(submit);
 		add.addActionListener(new addListener());
+		clear.addActionListener(new clearListener());
 		ep.add(scrollReceipt, BorderLayout.EAST);
 		return ep;
 	}
@@ -198,6 +224,19 @@ public class NewOrderPanel
 				
 			}
 		}
+	}
+
+	private class clearListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			clear();
+		}
+	}
+	
+	// Clears the receipt text area
+	private void clear() {
+		receipt.setText("");
 	}
 	
 	public void receiptBuilder(String object, String[] services) {

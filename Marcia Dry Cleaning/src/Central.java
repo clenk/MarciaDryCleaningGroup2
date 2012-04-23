@@ -29,7 +29,7 @@ public class Central extends JFrame
 		tabbedPane.addTab("  Pick Up Order  ", puop.buildPickUpOrderPanel());
 		add(tabbedPane);
 		
-		setSize(500, 500);
+		setSize(600, 600);
 		centerOnScreen();
 		setVisible(true);
 	}
