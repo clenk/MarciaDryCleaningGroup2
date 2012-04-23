@@ -260,16 +260,6 @@ public class CustomerPanel
 	
 	// Adds a person to the database
 	private boolean addPerson(String first, String last, String street, String city, String state, String zip, int isMembr) throws SQLException {
-		/*// First make sure the person is not already in the database
-		stmt = conn.prepareStatement("SELECT First, Last FROM CUSTOMER_DATA WHERE First = ? AND Last = ?");
-		stmt.setString(1, first);
-		stmt.setString(2, last);
-		ResultSet rs = stmt.executeQuery();
-		if (rs.next()) { // If any entries found...
-			JOptionPane.showMessageDialog(null, "Error: Customer already in the database!");
-			return false;
-		}*/
-		
 		// Add a person with the name to the database
 		stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA(First, Last, Street, City, State, Zip, IsClubMember) VALUES(?,?,?,?,?,?,?)");
 		stmt.setString(1, first);

@@ -50,30 +50,8 @@ public class NewOrderPanel
 	}
 	public JPanel buildNewOrderPanel()
 	{
-		//JPanel p = new JPanel();
 		Border panelBorder = BorderFactory.createTitledBorder("New Order Stuff");
 		NewOrderPanel.setBorder(panelBorder);
-		/*NewOrderPanel.setLayout(new GridLayout(3, 1));
-		NewOrderPanel.add(buildNorthPanel());
-		NewOrderPanel.add(buildDisplayPanel());
-		NewOrderPanel.add(buildSouthPanel());*/
-		
-		/*GridBagLayout mainGBLayout = new GridBagLayout();
-		GridBagConstraints mainGBConsts = new GridBagConstraints();
-		NewOrderPanel.setLayout(mainGBLayout);
-		
-		mainGBConsts.gridx = 0;
-		mainGBConsts.gridy = 0;
-		mainGBConsts.gridwidth = 0;
-		mainGBConsts.gridheight = 0;
-		mainGBConsts.fill = GridBagConstraints.BOTH;
-		mainGBConsts.weightx = 0;
-		mainGBConsts.weighty = 0;
-		mainGBConsts.anchor = GridBagConstraints.NORTH;
-		mainGBLayout.setConstraints(buildNorthPanel(), mainGBConsts);
-		NewOrderPanel.add(buildNorthPanel());*/
-		
-		//NewOrderPanel.add(p);
 		
 		NewOrderPanel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -90,8 +68,6 @@ public class NewOrderPanel
 		c.gridy = 2;
 		NewOrderPanel.add(buildSouthPanel(),c );
 		
-		
-		
 		return NewOrderPanel;
 	}
 	public JPanel buildDisplayPanel() {
@@ -106,31 +82,10 @@ public class NewOrderPanel
 		tp.add(sp);
 		JPanel bp = new JPanel();
 		leftBtn = new BasicArrowButton(SwingConstants.WEST);
-		//leftBtn.addActionListener(new LeftListener());
-	//	bp.add(leftBtn);
 		rightBtn = new BasicArrowButton(SwingConstants.EAST);
-		//rightBtn.addActionListener(new RightListener());
-	//	bp.add(rightBtn);
 		JPanel p = new JPanel();
-		//p.setLayout(new GridLayout(2, 1));
 		p.add(tp);
-		//p.add(bp);
-		//leftBtn.setEnabled(false); if there are more to the left
-		//rightBtn.setEnabled(false); if there are more to the right
 		return p;
-		
-		/*
-		JPanel p = new JPanel();
-		String[] data = {"hello", "world", "I", "AM", "AWESOME"};
-		JList list = new JList(data); //data has type String[]
-		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		list.setLayoutOrientation(JList.VERTICAL);
-		list.setVisibleRowCount(-1);
-		JScrollPane listScroller = new JScrollPane(list);
-		listScroller.setPreferredSize(new Dimension(250, 80));
-		p.add(listScroller);
-		return p;
-		*/
 	}
 	public JPanel buildSouthPanel() {
 		JPanel p = new JPanel();
@@ -154,7 +109,6 @@ public class NewOrderPanel
 			
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return num;
@@ -174,7 +128,6 @@ public class NewOrderPanel
 			}
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -196,7 +149,6 @@ public class NewOrderPanel
 			}
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -206,24 +158,20 @@ public class NewOrderPanel
 	public JPanel lilWestPanel() {
 		String[] data = getServices();
 		JPanel wp = new JPanel(); 
-		//wp.add(new JLabel("Object: "));
 		objectName = new JTextField(15);
 		
 		JPanel objectInfo = new JPanel();
-		objectInfo.add(new JLabel("Object: ")/*, BorderLayout.WEST*/);
-		objectInfo.add(objectName/*, BorderLayout.EAST*/);
+		objectInfo.add(new JLabel("Object: "));
+		objectInfo.add(objectName);
 		
-		servicesList = new JList(data); //data has type String[]
+		servicesList = new JList(data);
 		servicesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		servicesList.setLayoutOrientation(JList.VERTICAL);
 		servicesList.setVisibleRowCount(-1);
 		JScrollPane listScroller = new JScrollPane(servicesList);
-		//listScroller.setPreferredSize(new Dimension(10, 10));
-		//listScroller.setSize(10, 5);
 		wp.setLayout(new BorderLayout());
 		wp.add(objectInfo, BorderLayout.PAGE_START);
-		wp.add(listScroller, BorderLayout.CENTER/*, BorderLayout.SOUTH*/);
-		//wp.add(objectName/*, BorderLayout.NORTH*/);
+		wp.add(listScroller, BorderLayout.CENTER);
 		wp.add(Box.createRigidArea(new Dimension(50,0)), BorderLayout.LINE_START);
 		wp.add(Box.createRigidArea(new Dimension(50,0)), BorderLayout.LINE_END);
 		
@@ -239,7 +187,6 @@ public class NewOrderPanel
 		receipt.setEditable(false);
 		receipt.setLineWrap(true);
 		scrollReceipt = new JScrollPane(receipt);
-		//scrollReceipt.setSize(4, 8);
 		ep.add(add);
 		ep.add(clear);
 		ep.add(submit);
@@ -262,7 +209,6 @@ public class NewOrderPanel
 				String[] services = new String[servicesO.length];
 				for(int i = 0; i < servicesO.length; i++) {
 					services[i] = servicesO[i].toString();
-					//System.out.println(servicesO[i]);
 				}
 				if(object.equals("") || services.length == 0) {
 					JOptionPane.showMessageDialog(null, "You must have both an Object of clothing typed in and one or more services selected");
@@ -298,7 +244,6 @@ public class NewOrderPanel
 					submitOrder();
 				} catch (SQLException e1)
 				{
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
@@ -311,8 +256,6 @@ public class NewOrderPanel
 		Date currentDatetime = new Date(System.currentTimeMillis());
 		Timestamp droppedOff = new Timestamp(currentDatetime.getTime());
 		
-		//Date date = null;
-		//long time = date.getTime();
 		double priceTotal = runningTotal+(runningTotal*TAX);
 		Timestamp promisedTime = null;
 		String[] services;
@@ -338,7 +281,6 @@ public class NewOrderPanel
 				int hours = timeReqd.getHours();
 				
 				promisedTime = new Timestamp(droppedOff.getTime()+(long)(hours*60*60*1000)+(long)(min*60*1000));
-				//Timestamp plustwenty = new Timestamp(timestamp.getTime()+20*60*1000);
 			}
 		}
 		
@@ -371,7 +313,6 @@ public class NewOrderPanel
 			}
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return ts;
@@ -388,7 +329,6 @@ public class NewOrderPanel
 			}
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return num;
@@ -404,7 +344,6 @@ public class NewOrderPanel
 			}
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return num;
@@ -418,7 +357,6 @@ public class NewOrderPanel
 		for(int i = 0; i < services.length; i++) {
 			receipt.append("    -"+services[i]+"\n");
 			runningTotal += prices[i];
-			
 		}
 	}
 	
@@ -454,7 +392,6 @@ public class NewOrderPanel
 			
 			peopleSet = null;
 			if(!first.equals("") && !last.equals("")) {
-				System.err.println("name query");
 				peopleSet = nameQuery(first, last);
 			} else if(!phone.equals(null)){
 				peopleSet = phoneQuery(phone);
@@ -478,7 +415,6 @@ public class NewOrderPanel
 	
 	private void getPerson() throws SQLException {
 		dispTA.setText("");
-		System.err.println(peopleSet.getString("First"));
 		try {
 			pages = extractStringData(peopleSet);
 		} catch (Exception e) {
@@ -513,7 +449,6 @@ public class NewOrderPanel
 			}
 			try {
 				if (peopleSet.previous()) { // If another person exists...
-					System.err.println("left-previous");
 					getPerson();
 				}
 				
@@ -567,7 +502,6 @@ public class NewOrderPanel
 		String allData = "";
 		String first = "";
 		String last = "";
-		//rs.beforeFirst();
 		rs.previous();
 		while(rs.next()) {
 			if(!first.equals(rs.getString("First")) && !last.equals(rs.getString("Last"))) {
@@ -580,7 +514,7 @@ public class NewOrderPanel
 		}
 		rs.absolute(row); // Go back to where we were in the resultset
 		
-		return allData.substring(allData.indexOf("%")+1);//.split("%");
+		return allData.substring(allData.indexOf("%")+1);
 	}
 	
 	public ResultSet nameQuery(String first, String last) {
@@ -593,7 +527,6 @@ public class NewOrderPanel
 			rs = stmt.executeQuery();
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -610,7 +543,6 @@ public class NewOrderPanel
 			rs = stmt.executeQuery();
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return rs;
@@ -643,7 +575,6 @@ public class NewOrderPanel
 		phoneTF = new JTextField(15);
 		phonePanel.add(phoneTF);
 		p.add(phonePanel);
-		//p.add(buildNameBtnPanel());
 		return p;
 	}
 }
