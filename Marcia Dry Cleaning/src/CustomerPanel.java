@@ -31,12 +31,15 @@ public class CustomerPanel
 	private JTextField curPhoneTF;
 	private JTextField newEmailTF;
 	private JTextField curEmailTF;
+	private BasicArrowButton leftPeopleBtn;
+	private BasicArrowButton rightPeopleBtn;
 	private BasicArrowButton leftPhoneBtn;
 	private BasicArrowButton rightPhoneBtn;
 	private BasicArrowButton leftEmailBtn;
 	private BasicArrowButton rightEmailBtn;
 
 	int curPerson; // The id of the current person entry (column: CUSTOMER_DATA.idCustomer)
+	ResultSet peopleSet; // Holds all the people found
 	ResultSet phoneSet; // Holds all the phones for the current person
 	String curPhone = ""; // The current phone entry
 	ResultSet emailSet; // Holds all the Emails for the current person
@@ -65,6 +68,14 @@ public class CustomerPanel
 		p.add(findBtn);
 		p.add(delBtn);
 		p.add(editBtn);
+		leftPeopleBtn = new BasicArrowButton(SwingConstants.WEST);
+		leftPeopleBtn.addActionListener(new LeftPeopleListener());
+		p.add(leftPeopleBtn);
+		rightPeopleBtn = new BasicArrowButton(SwingConstants.EAST);
+		rightPeopleBtn.addActionListener(new RightPeopleListener());
+		p.add(rightPeopleBtn);
+		leftPeopleBtn.setEnabled(false);
+		rightPeopleBtn.setEnabled(false);
 		return p;
 	}
 
@@ -163,6 +174,9 @@ public class CustomerPanel
 		editPhoneBtn.addActionListener(new PhoneListener());
 		updatePhonesPanel.add(editPhoneBtn);
 		p.add(updatePhonesPanel, BorderLayout.PAGE_END);
+
+		leftPhoneBtn.setEnabled(false);
+		rightPhoneBtn.setEnabled(false);
 		
 		return p;
 	}
@@ -204,6 +218,9 @@ public class CustomerPanel
 		updateEmailsPanel.add(editEmailBtn);
 		p.add(updateEmailsPanel, BorderLayout.PAGE_END);
 		
+		leftEmailBtn.setEnabled(false);
+		rightEmailBtn.setEnabled(false);
+		
 		return p;
 	}
 	
@@ -233,6 +250,8 @@ public class CustomerPanel
 		curEmailTF.setText("");
 		newPhoneTF.setText("");
 		newEmailTF.setText("");
+		leftPeopleBtn.setEnabled(false);
+		rightPeopleBtn.setEnabled(false);
 		leftPhoneBtn.setEnabled(false);
 		rightPhoneBtn.setEnabled(false);
 		leftEmailBtn.setEnabled(false);
@@ -241,7 +260,7 @@ public class CustomerPanel
 	
 	// Adds a person to the database
 	private boolean addPerson(String first, String last, String street, String city, String state, String zip, int isMembr) throws SQLException {
-		// First make sure the person is not already in the database
+		/*// First make sure the person is not already in the database
 		stmt = conn.prepareStatement("SELECT First, Last FROM CUSTOMER_DATA WHERE First = ? AND Last = ?");
 		stmt.setString(1, first);
 		stmt.setString(2, last);
@@ -249,7 +268,7 @@ public class CustomerPanel
 		if (rs.next()) { // If any entries found...
 			JOptionPane.showMessageDialog(null, "Error: Customer already in the database!");
 			return false;
-		}
+		}*/
 		
 		// Add a person with the name to the database
 		stmt = conn.prepareStatement("INSERT INTO CUSTOMER_DATA(First, Last, Street, City, State, Zip, IsClubMember) VALUES(?,?,?,?,?,?,?)");
@@ -276,62 +295,77 @@ public class CustomerPanel
 		stmt = conn.prepareStatement("SELECT idCustomer, First, Last, Street, City, State, Zip, IsClubMember FROM CUSTOMER_DATA WHERE First = ? AND Last = ?");
 		stmt.setString(1, first);
 		stmt.setString(2, last);
-		ResultSet rs = stmt.executeQuery();
+		peopleSet = stmt.executeQuery();
 		
-		if (rs.next()) { // If any entries found...
-			clear();
-			curPerson = rs.getInt("idCustomer");
-			// Fill in the form fields
-			firstTF.setText(rs.getString("First"));
-			lastTF.setText(rs.getString("Last"));
-			streetTF.setText(rs.getString("Street"));
-			cityTF.setText(rs.getString("City"));
-			stateTF.setText(rs.getString("State"));
-			zipTF.setText(rs.getString("Zip"));
-			if (rs.getBoolean("IsClubMember")) {
-				isMemberChkBx.setSelected(true);
-			} else {
-				isMemberChkBx.setSelected(false);
-			}
-			
-			// Find their phone info 
-			stmt = conn.prepareStatement("SELECT PhoneNum FROM PHONE, CUSTOMER_DATA_HAS_PHONE WHERE idPhone = PHONE_idPhone AND CUSTOMER_DATA_idCustomer = ?");
-			stmt.setInt(1, curPerson);
-			phoneSet = stmt.executeQuery();
-			if (phoneSet.next()) { // If any entries found...
-				curPhone = phoneSet.getString(1);
-				curPhoneTF.setText(curPhone); // Output the first phone number
-				
-				// Enable the right button if there is more than 1 result
-				if (!phoneSet.isLast()) {
-					rightPhoneBtn.setEnabled(true);
-				} else {
-					rightPhoneBtn.setEnabled(false);
-				}
-				leftPhoneBtn.setEnabled(false); // Disable the left button because we're on the first result  
-			}
-			
-			// Find their email info
-			stmt = conn.prepareStatement("SELECT EmailAddr FROM EMAIL, CUSTOMER_DATA_HAS_EMAIL WHERE idEmail = EMAIL_idEmail AND CUSTOMER_DATA_idCustomer = ?");
-			stmt.setInt(1, curPerson);
-			emailSet = stmt.executeQuery();
-			if (emailSet.next()) { // If any entries found...
-				curEmail = emailSet.getString(1);
-				curEmailTF.setText(curEmail); // Output the first email
-				
-				// Enable the right button if there is more than 1 result
-				if (!emailSet.isLast()) {
-					rightEmailBtn.setEnabled(true);
-				} else {
-					rightEmailBtn.setEnabled(false);
-				}
-				leftEmailBtn.setEnabled(false); // Disable the left button because we're on the first result  
-			}
+		if (peopleSet.next()) { // If any entries found, fill in the form entries for the first person found
+			getPerson();
 			
 			return true;
 		} else { // If the name isn't in the database, show an error message
 			JOptionPane.showMessageDialog(null, "No one with that name found in the database!");
 			return false;
+		}
+	}
+	
+	private void getPerson() throws SQLException {
+		clear();
+		curPerson = peopleSet.getInt("idCustomer");
+		firstTF.setText(peopleSet.getString("First"));
+		lastTF.setText(peopleSet.getString("Last"));
+		streetTF.setText(peopleSet.getString("Street"));
+		cityTF.setText(peopleSet.getString("City"));
+		stateTF.setText(peopleSet.getString("State"));
+		zipTF.setText(peopleSet.getString("Zip"));
+		if (peopleSet.getBoolean("IsClubMember")) {
+			isMemberChkBx.setSelected(true);
+		} else {
+			isMemberChkBx.setSelected(false);
+		}
+
+		// Enable the right button if there is more than 1 result
+		if (!peopleSet.isLast()) {
+			rightPeopleBtn.setEnabled(true);
+		} else {
+			rightPeopleBtn.setEnabled(false);
+		}
+		if (!peopleSet.isFirst()) {
+			leftPeopleBtn.setEnabled(true);
+		} else {
+			leftPeopleBtn.setEnabled(false);
+		}
+
+		// Find their phone info 
+		stmt = conn.prepareStatement("SELECT PhoneNum FROM PHONE, CUSTOMER_DATA_HAS_PHONE WHERE idPhone = PHONE_idPhone AND CUSTOMER_DATA_idCustomer = ?");
+		stmt.setInt(1, curPerson);
+		phoneSet = stmt.executeQuery();
+		if (phoneSet.next()) { // If any entries found...
+			curPhone = phoneSet.getString(1);
+			curPhoneTF.setText(curPhone); // Output the first phone number
+			
+			// Enable the right button if there is more than 1 result
+			if (!phoneSet.isLast()) {
+				rightPhoneBtn.setEnabled(true);
+			} else {
+				rightPhoneBtn.setEnabled(false);
+			}
+			leftPhoneBtn.setEnabled(false); // Disable the left button because we're on the first result  
+		}
+		
+		// Find their email info
+		stmt = conn.prepareStatement("SELECT EmailAddr FROM EMAIL, CUSTOMER_DATA_HAS_EMAIL WHERE idEmail = EMAIL_idEmail AND CUSTOMER_DATA_idCustomer = ?");
+		stmt.setInt(1, curPerson);
+		emailSet = stmt.executeQuery();
+		if (emailSet.next()) { // If any entries found...
+			curEmail = emailSet.getString(1);
+			curEmailTF.setText(curEmail); // Output the first email
+			
+			// Enable the right button if there is more than 1 result
+			if (!emailSet.isLast()) {
+				rightEmailBtn.setEnabled(true);
+			} else {
+				rightEmailBtn.setEnabled(false);
+			}
+			leftEmailBtn.setEnabled(false); // Disable the left button because we're on the first result  
 		}
 	}
 	
@@ -351,19 +385,14 @@ public class CustomerPanel
 				delEmail(false);
 				emailSet.beforeFirst();
 			}
-			System.err.println("phones and emails deled");
 			
 			// Delete them from the database
 			stmt = conn.prepareStatement("DELETE FROM CUSTOMER_DATA WHERE `idCustomer`=?");
-			System.err.println("statement prepared");
 			stmt.setInt(1, curPerson);
 			stmt.executeUpdate();
 			
-			System.err.println("update executed");
-			
 			// Clear the form fields
 			clear();
-			System.err.println("cleared");
 			
 			JOptionPane.showMessageDialog(null, "Customer deleted!");
 			return true;
@@ -531,7 +560,6 @@ public class CustomerPanel
 			stmt = conn.prepareStatement("DELETE FROM EMAIL WHERE `idEmail`=?");
 			stmt.setInt(1, EmailID);
 			stmt.executeUpdate();
-			System.err.println("DELETING "+curEmail);
 			if (print) JOptionPane.showMessageDialog(null, "Email deleted!");
 			findPerson(firstTF.getText(), lastTF.getText()); // Reset the form data
 			return true;
@@ -567,11 +595,13 @@ public class CustomerPanel
 				// If the Add button was pressed...
 				if (buttonText.equals("Add")) {
 					addPerson(first, last, street, city, state, zip, isClubMember);
+					findPerson(first, last);
 				
 				// If the Find button was pressed...
 				} else if (buttonText.equals("Find")) { 
 					findPerson(first, last);
-
+					leftPeopleBtn.setEnabled(false); // Disable the left button because we're on the first result
+					
 				// If the Delete button was pressed...
 				} else if (buttonText.equals("Delete")) {
 					if (curPerson > 0) {
@@ -645,16 +675,19 @@ public class CustomerPanel
 		}
 	}
 
-	// Handles the right phone arrow button
+	// Handles the left phone arrow button
 	private class LeftPhoneListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
+			if (phoneSet == null) {
+				return;
+			}
 			try {
-				if (phoneSet.previous()) { // If another name exists...
+				if (phoneSet.previous()) { // If another phone exists...
 					curPhone = phoneSet.getString(1);
-					curPhoneTF.setText(curPhone); // Output the name
+					curPhoneTF.setText(curPhone); // Output the phone
 				}
 				
-				// Reset the other arrow button if it's disable
+				// Reset the other arrow button if it's disabled
 				if (!rightPhoneBtn.isEnabled()) {
 					rightPhoneBtn.setEnabled(true);
 				}
@@ -672,12 +705,15 @@ public class CustomerPanel
 	// Handles the right phone arrow button
 	private class RightPhoneListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
+			if (phoneSet == null) {
+				return;
+			}
 			try {
 				if (phoneSet.next()) { // If another phone exists...
 					curPhone = phoneSet.getString(1);
 					curPhoneTF.setText(curPhone); // Output the phone
 
-					// Reset the other arrow button if it's disable
+					// Reset the other arrow button if it's disabled
 					if (!leftPhoneBtn.isEnabled()) {
 						leftPhoneBtn.setEnabled(true);
 					}
@@ -742,16 +778,19 @@ public class CustomerPanel
 		}
 	}
 
-	// Handles the right email arrow button
+	// Handles the left email arrow button
 	private class LeftEmailListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
+			if (emailSet == null) {
+				return;
+			}
 			try {
 				if (emailSet.previous()) { // If another email exists...
 					curEmail = emailSet.getString(1);
 					curEmailTF.setText(curEmail); // Output the email
 				}
 				
-				// Reset the other arrow button if it's disable
+				// Reset the other arrow button if it's disabled
 				if (!rightEmailBtn.isEnabled()) {
 					rightEmailBtn.setEnabled(true);
 				}
@@ -769,12 +808,15 @@ public class CustomerPanel
 	// Handles the right email arrow button
 	private class RightEmailListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
+			if (emailSet == null) {
+				return;
+			}
 			try {
 				if (emailSet.next()) { // If another email exists...
 					curEmail = emailSet.getString(1);
 					curEmailTF.setText(curEmail); // Output the email
 
-					// Reset the other arrow button if it's disable
+					// Reset the other arrow button if it's disabled
 					if (!leftEmailBtn.isEnabled()) {
 						leftEmailBtn.setEnabled(true);
 					}
@@ -786,6 +828,60 @@ public class CustomerPanel
 				}
 			} catch (SQLException e1) {
 				System.err.println("RightEmailListener Error");
+			}
+		}
+	}
+	
+	// Handles the left person arrow button
+	private class LeftPeopleListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			if (peopleSet == null) {
+				return;
+			}
+			try {
+				if (peopleSet.previous()) { // If another person exists...
+					getPerson();
+				}
+				
+				// Reset the other arrow button if it's disabled
+				if (!rightPeopleBtn.isEnabled()) {
+					rightPeopleBtn.setEnabled(true);
+				}
+				
+				// Disable the button if the end of the result set is reached
+				if (peopleSet.isFirst()) {
+					leftPeopleBtn.setEnabled(false);
+				}
+				
+			} catch (SQLException e1) {
+				System.err.println("LeftPeopleListener Error");
+			}
+		}
+	}
+	
+	// Handles the right person arrow button
+	private class RightPeopleListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			if (peopleSet == null) {
+				return;
+			}
+			try {
+				if (peopleSet.next()) { // If another person exists...
+					getPerson();
+
+					// Reset the other arrow button if it's disabled
+					if (!leftPeopleBtn.isEnabled()) {
+						leftPeopleBtn.setEnabled(true);
+					}
+					
+					// Disable the button if the end of the result set is reached
+					if (peopleSet.isLast()) {
+						rightPeopleBtn.setEnabled(false);
+					}
+				}
+				
+			} catch (SQLException e1) {
+				System.err.println("RightPeopleListener Error");
 			}
 		}
 	}

@@ -32,12 +32,17 @@ public class NewOrderPanel
 	private JList servicesList;
 	private JTextArea receipt;
 	private JScrollPane scrollReceipt;
+	private BasicArrowButton leftPeopleBtn;
+	private BasicArrowButton rightPeopleBtn;
+	
 	private PreparedStatement stmt;
-	private String[] pages = {""};
+	private String pages;
 	private boolean isClubMember;
 	private int customerID;
 	private double runningTotal;
 	private double TAX = .07;
+	ResultSet peopleSet; // Holds all the people found
+
 	
 	public NewOrderPanel(Connection conn)
 	{
@@ -297,7 +302,6 @@ public class NewOrderPanel
 					e1.printStackTrace();
 				}
 			}
-			//if receipt isn't empty, submitOrder()
 		}
 	}
 	
@@ -429,6 +433,14 @@ public class NewOrderPanel
 		JButton findBtn = new JButton("Find");
 		findBtn.addActionListener(new FindListener());
 		p.add(findBtn);
+		leftPeopleBtn = new BasicArrowButton(SwingConstants.WEST);
+		leftPeopleBtn.addActionListener(new LeftPeopleListener());
+		p.add(leftPeopleBtn);
+		rightPeopleBtn = new BasicArrowButton(SwingConstants.EAST);
+		rightPeopleBtn.addActionListener(new RightPeopleListener());
+		p.add(rightPeopleBtn);
+		leftPeopleBtn.setEnabled(false);
+		rightPeopleBtn.setEnabled(false);
 		return p;
 	}
 	
@@ -436,50 +448,126 @@ public class NewOrderPanel
 	{
 		public void actionPerformed(ActionEvent e)
 		{
-			
-			dispTA.setText("");
 			String first = firstTF.getText();
 			String last = lastTF.getText();
 			String phone = phoneTF.getText();
-			int clubMem;
 			
-			//System.out.println(phone);
-			ResultSet rs = null;
+			peopleSet = null;
 			if(!first.equals("") && !last.equals("")) {
-				rs = nameQuery(first, last);
+				System.err.println("name query");
+				peopleSet = nameQuery(first, last);
 			} else if(!phone.equals(null)){
-				rs = phoneQuery(phone);
+				peopleSet = phoneQuery(phone);
 			} else {
 				JOptionPane.showMessageDialog(null, "You must have first & last names OR phone number");
 			}
 			
-			try
-			{
-				pages = extractStringData(rs);
-				rs.beforeFirst();
-				rs.next();
-				customerID = rs.getInt("idCustomer");
-				clubMem = rs.getInt("isClubMember");
-				if(clubMem == 1) {
-					isClubMember = true;
-				} else {
-					isClubMember = false;
+			try {
+				if (peopleSet.next()) { // If any entries found, fill in the form entries for the first person found
+					getPerson();
+					leftPeopleBtn.setEnabled(false); // Disable the left button because we're on the first result
+				} else { // If the name isn't in the database, show an error message
+					JOptionPane.showMessageDialog(null, "No one with that name found in the database!");
 				}
-			} catch (Exception e1)
-			{
+			} catch (Exception e1) {
 				e1.printStackTrace();
-			}
-			dispTA.append(pages[0]);
-			
+				JOptionPane.showMessageDialog(null, "Error while finding person!");
+			} 
 		}
 	}
 	
-	public String[] extractStringData(ResultSet rs) throws Exception {
+	private void getPerson() throws SQLException {
+		dispTA.setText("");
+		System.err.println(peopleSet.getString("First"));
+		try {
+			pages = extractStringData(peopleSet);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		customerID = peopleSet.getInt("idCustomer");
+		int clubMem = peopleSet.getInt("isClubMember");
+		if(clubMem == 1) {
+			isClubMember = true;
+		} else {
+			isClubMember = false;
+		}
+		// Enable the right button if there is more than 1 result
+		if (!peopleSet.isLast()) {
+			rightPeopleBtn.setEnabled(true);
+		} else {
+			rightPeopleBtn.setEnabled(false);
+		}
+		if (!peopleSet.isFirst()) {
+			leftPeopleBtn.setEnabled(true);
+		} else {
+			leftPeopleBtn.setEnabled(false);
+		}
+		dispTA.append(pages);
+	}
 	
+	// Handles the left person arrow button
+	private class LeftPeopleListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			if (peopleSet == null) {
+				return;
+			}
+			try {
+				if (peopleSet.previous()) { // If another person exists...
+					System.err.println("left-previous");
+					getPerson();
+				}
+				
+				// Reset the other arrow button if it's disabled
+				if (!rightPeopleBtn.isEnabled()) {
+					rightPeopleBtn.setEnabled(true);
+				}
+				
+				// Disable the button if the end of the result set is reached
+				if (peopleSet.isFirst()) {
+					leftPeopleBtn.setEnabled(false);
+				}
+				
+			} catch (SQLException e1) {
+				System.err.println("LeftPeopleListener Error");
+			}
+		}
+	}
+	
+	// Handles the right person arrow button
+	private class RightPeopleListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			if (peopleSet == null) {
+				return;
+			}
+			try {
+				if (peopleSet.next()) { // If another person exists...
+					getPerson();
+
+					// Reset the other arrow button if it's disabled
+					if (!leftPeopleBtn.isEnabled()) {
+						leftPeopleBtn.setEnabled(true);
+					}
+					
+					// Disable the button if the end of the result set is reached
+					if (peopleSet.isLast()) {
+						rightPeopleBtn.setEnabled(false);
+					}
+				}
+				
+			} catch (SQLException e1) {
+				System.err.println("RightPeopleListener Error");
+			}
+		}
+	}
+	
+	public String extractStringData(ResultSet rs) throws Exception {
+		int row = rs.getRow(); // Hold our place
+		
 		String allData = "";
 		String first = "";
 		String last = "";
-		rs.beforeFirst();
+		//rs.beforeFirst();
+		rs.previous();
 		while(rs.next()) {
 			if(!first.equals(rs.getString("First")) && !last.equals(rs.getString("Last"))) {
 				first = rs.getString("First");
@@ -489,8 +577,9 @@ public class NewOrderPanel
 				allData += "\n"+rs.getString("City")+", "+rs.getString("State")+" "+rs.getString("Zip");
 			}
 		}
-		return allData.substring(allData.indexOf("%")+1).split("%");
+		rs.absolute(row); // Go back to where we were in the resultset
 		
+		return allData.substring(allData.indexOf("%")+1);//.split("%");
 	}
 	
 	public ResultSet nameQuery(String first, String last) {
