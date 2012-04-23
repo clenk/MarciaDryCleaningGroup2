@@ -69,21 +69,23 @@ public class PickUpOrderPanel
 		JLabel telephoneTag = new JLabel("Telephone:");
 		JLabel orderIDTag = new JLabel("Order ID:");
 		JButton personSubmit = new JButton("Submit");
+		JButton phoneSubmit = new JButton("Submit");
 		JButton orderIDSubmit = new JButton("Submit");
 		searchPanel.add(firstNameTag);
 		searchPanel.add(firstName);
 		searchPanel.add(new JLabel(""));
 		searchPanel.add(lastNameTag);
 		searchPanel.add(lastName);
-		searchPanel.add(new JLabel(""));
+		searchPanel.add(personSubmit);
 		searchPanel.add(telephoneTag);
 		searchPanel.add(telephone);
-		searchPanel.add(personSubmit);
+		searchPanel.add(phoneSubmit);
 		searchPanel.add(orderIDTag);
 		searchPanel.add(orderID);
 		searchPanel.add(orderIDSubmit);
 		
 		personSubmit.addActionListener(new nameListener());
+		phoneSubmit.addActionListener(new phoneListener());
 		orderIDSubmit.addActionListener(new orderIDListener());
 		
 		PickUpOrderPanel.add(searchPanel, BorderLayout.NORTH);
@@ -134,9 +136,35 @@ public class PickUpOrderPanel
 		PickUpOrderPanel.add(confirmPanel, BorderLayout.SOUTH);
 	}
 	
-	// LISTENERS for the PickUpOrderPanel
+	// Returns a string of the info of the given customer
+	private String getCustInfo(int id) {
+		try {
+			PreparedStatement stm = conn.prepareStatement("SELECT * FROM CUSTOMER_DATA WHERE idCustomer = ?");
+			stm.setInt(1, id);
+			ResultSet rs = stm.executeQuery();
+			rs.next();
+			String street = rs.getString("Street");
+			String city = rs.getString("City");
+			String state = rs.getString("State");
+			int zip = rs.getInt("Zip");
+			int isMembr = rs.getInt("IsClubMember");
+			String isMember = "";
+			if (isMembr == 1) {
+				isMember = "Club Member";
+			} 
+			
+			return street+"\n"+city+", "+state+" "+zip+"\n"+isMember;
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "";
+		}
+	}
 	
-	// FIRST NAME, LAST NAME, TELEPHONE search listener
+	// LISTENERS for the PickUpOrderPanel
+
+	// FIRST NAME, LAST NAME search listener
 	private class nameListener implements ActionListener 
 	{
 		public void actionPerformed(ActionEvent e) 
@@ -167,7 +195,8 @@ public class PickUpOrderPanel
 						activeOrderID = orderIDrs.getInt("OrderNumber");
 						
 						StringBuilder sb = new StringBuilder();
-						sb.append("Order ID: ");
+						sb.append(getCustInfo(customerID));
+						sb.append("\nOrder ID: ");
 						sb.append(activeOrderID);
 						sb.append("\n\nDate Dropped Off: ");
 						sb.append(orderIDrs.getString("DateDroppedOff"));
@@ -191,8 +220,35 @@ public class PickUpOrderPanel
 						dispTA.setText(orders.get(0));
 						entriesIndex = 0;
 					}
-				} 
-				else if(!telephone.equals(null))
+				}
+				else 
+				{
+					JOptionPane.showMessageDialog(null, "You must have first & last names!");
+				}
+			} 
+			catch (SQLException e1)
+			{
+				JOptionPane.showMessageDialog(null, "Invalid arguments.");
+				e1.printStackTrace();
+				return;
+			}
+		}
+	}
+	
+	// TELEPHONE search listener
+	private class phoneListener implements ActionListener 
+	{
+		public void actionPerformed(ActionEvent e) 
+		{
+			dispTA.setText("");
+			orders.clear();
+			activeOrderIDIndices.clear();
+			rightBtn.setEnabled(true);
+			leftBtn.setEnabled(true);
+			
+			try
+			{
+				if(!telephone.getText().equals("") && telephone.getText().matches("\\d{3}-\\d{3}-\\d{4}"))
 				{
 					PreparedStatement telephoneQuery = conn.prepareStatement("select idCustomer from customer_data, customer_data_has_phone, phone where customer_data.idCustomer = customer_data_has_phone.CUSTOMER_DATA_idCustomer && customer_data_has_phone.PHONE_idPhone = phone.idPhone && phone.phoneNum = ?");
 					telephoneQuery.setString(1,telephone.getText());
@@ -208,7 +264,8 @@ public class PickUpOrderPanel
 						activeOrderID = orderIDrs.getInt("OrderNumber");
 						
 						StringBuilder sb = new StringBuilder();
-						sb.append("Order ID: ");
+						sb.append(getCustInfo(customerID));
+						sb.append("\nOrder ID: ");
 						sb.append(activeOrderID);
 						sb.append("\n\nDate Dropped Off: ");
 						sb.append(orderIDrs.getString("DateDroppedOff"));
@@ -235,7 +292,7 @@ public class PickUpOrderPanel
 				} 
 				else 
 				{
-					JOptionPane.showMessageDialog(null, "You must have first & last names OR phone number");
+					JOptionPane.showMessageDialog(null, "You must have a valid phone number!");
 				}
 			} 
 			catch (SQLException e1)
@@ -281,6 +338,7 @@ public class PickUpOrderPanel
 		public void actionPerformed(ActionEvent e) 
 		{
 			dispTA.setText("");
+			orders.clear();
 			leftBtn.setEnabled(true);
 			rightBtn.setEnabled(true);
 			
@@ -293,9 +351,11 @@ public class PickUpOrderPanel
 				orderIDrs.next();
 				
 				activeOrderID = orderIDrs.getInt("OrderNumber");
+				int customerID = orderIDrs.getInt("CUSTOMER_DATA_idCustomer");
 				
 				StringBuilder sb = new StringBuilder();
-				sb.append("Order ID: ");
+				sb.append(getCustInfo(customerID));
+				sb.append("\nOrder ID: ");
 				sb.append(orderNumber);
 				sb.append("\n\nDate Dropped Off: ");
 				sb.append(orderIDrs.getString("DateDroppedOff"));
@@ -312,7 +372,7 @@ public class PickUpOrderPanel
 				sb.append("\n\nPayment Method: ");
 				sb.append(orderIDrs.getString("PaymentMethod"));
 				
-				dispTA.append(sb.toString());				
+				dispTA.append(sb.toString());
 			} 
 			catch (SQLException e1) 
 			{
