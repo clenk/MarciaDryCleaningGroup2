@@ -150,7 +150,7 @@ public class NewOrderPanel
 		ResultSet serviceInfo;
 		try
 		{
-			PreparedStatement serviceLookup = conn.prepareStatement("SELECT ServiceDescription FROM service_data");
+			PreparedStatement serviceLookup = conn.prepareStatement("SELECT * FROM service_data");
 			serviceInfo = serviceLookup.executeQuery();
 			for(int i = 0; i < size; i++) {
 				if(serviceInfo.next()) {
