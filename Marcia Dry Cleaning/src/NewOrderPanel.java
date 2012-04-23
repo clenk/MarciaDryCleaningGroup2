@@ -17,6 +17,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicArrowButton;
 
+
 public class NewOrderPanel 
 {
 	private JPanel NewOrderPanel = new JPanel();
@@ -31,6 +32,10 @@ public class NewOrderPanel
 	private JList servicesList;
 	private JTextArea receipt;
 	private JScrollPane scrollReceipt;
+	private PreparedStatement stmt;
+	private String[] pages = {""};
+	private boolean isClubMember;
+	private int customerID;
 	
 	public NewOrderPanel(Connection conn)
 	{
@@ -56,19 +61,19 @@ public class NewOrderPanel
 		
 		
 		JPanel tp = new JPanel();
-		dispTA = new JTextArea(4, 36);
+		dispTA = new JTextArea(7, 36);
 		dispTA.enableInputMethods(false);
 		dispTA.setEditable(false);
-		dispTA.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+		dispTA.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 		JScrollPane sp = new JScrollPane(dispTA);
 		tp.add(sp);
 		JPanel bp = new JPanel();
 		leftBtn = new BasicArrowButton(SwingConstants.WEST);
 		//leftBtn.addActionListener(new LeftListener());
-		bp.add(leftBtn);
+	//	bp.add(leftBtn);
 		rightBtn = new BasicArrowButton(SwingConstants.EAST);
 		//rightBtn.addActionListener(new RightListener());
-		bp.add(rightBtn);
+	//	bp.add(rightBtn);
 		JPanel p = new JPanel();
 		p.setLayout(new GridLayout(2, 1));
 		p.add(tp);
@@ -184,18 +189,22 @@ public class NewOrderPanel
 	{
 		public void actionPerformed(ActionEvent e)
 		{
-			String object = objectName.getText();
-			Object[] servicesO = servicesList.getSelectedValues();
-			String[] services = new String[servicesO.length];
-			for(int i = 0; i < servicesO.length; i++) {
-				services[i] = servicesO[i].toString();
-				//System.out.println(servicesO[i]);
-			}
-			if(object.equals("") || services.length == 0) {
-				JOptionPane.showMessageDialog(null, "You must have both an Object of clothing typed in and one or more services selected");
-			} else {
-				receiptBuilder(object, services);
+			if(customerID != 0) {
 				
+				String object = objectName.getText();
+				Object[] servicesO = servicesList.getSelectedValues();
+				String[] services = new String[servicesO.length];
+				for(int i = 0; i < servicesO.length; i++) {
+					services[i] = servicesO[i].toString();
+					//System.out.println(servicesO[i]);
+				}
+				if(object.equals("") || services.length == 0) {
+					JOptionPane.showMessageDialog(null, "You must have both an Object of clothing typed in and one or more services selected");
+				} else {
+					receiptBuilder(object, services);
+				}
+			} else {
+				JOptionPane.showMessageDialog(null, "You must have a customer selected to add an order!");
 			}
 		}
 	}
@@ -216,10 +225,109 @@ public class NewOrderPanel
 	public JPanel buildNameBtnPanel(){
 		JPanel p = new JPanel();
 		JButton findBtn = new JButton("Find");
-		//findBtn.addActionListener(new NameFindListener());
+		findBtn.addActionListener(new FindListener());
 		p.add(findBtn);
 		return p;
 	}
+	
+	private class FindListener implements ActionListener
+	{
+		public void actionPerformed(ActionEvent e)
+		{
+			
+			dispTA.setText("");
+			String first = firstTF.getText();
+			String last = lastTF.getText();
+			String phone = phoneTF.getText();
+			int clubMem;
+			
+			//System.out.println(phone);
+			ResultSet rs = null;
+			if(!first.equals("") && !last.equals("")) {
+				rs = nameQuery(first, last);
+			} else if(!phone.equals(null)){
+				rs = phoneQuery(phone);
+			} else {
+				JOptionPane.showMessageDialog(null, "You must have first & last names OR phone number");
+			}
+			
+			try
+			{
+				pages = extractStringData(rs);
+				rs.beforeFirst();
+				rs.next();
+				customerID = rs.getInt("idCustomer");
+				clubMem = rs.getInt("isClubMember");
+				if(clubMem == 1) {
+					isClubMember = true;
+				} else {
+					isClubMember = false;
+				}
+			} catch (Exception e1)
+			{
+				e1.printStackTrace();
+			}
+			dispTA.append(pages[0]);
+			
+		}
+	}
+	
+	public String[] extractStringData(ResultSet rs) throws Exception {
+	
+		String allData = "";
+		String first = "";
+		String last = "";
+		rs.beforeFirst();
+		while(rs.next()) {
+			if(!first.equals(rs.getString("First")) && !last.equals(rs.getString("Last"))) {
+				first = rs.getString("First");
+				last = rs.getString("Last");
+				allData += "%"+first + " "+last;
+				allData += "\n"+rs.getString("Street");
+				allData += "\n"+rs.getString("City")+", "+rs.getString("State")+" "+rs.getString("Zip");
+			}
+		}
+		return allData.substring(allData.indexOf("%")+1).split("%");
+		
+	}
+	
+	public ResultSet nameQuery(String first, String last) {
+		ResultSet rs = null;
+		try
+		{
+			stmt = conn.prepareStatement("SELECT * FROM CUSTOMER_DATA WHERE FIRST = ? and LAST = ?");
+			stmt.setString(1, first);
+			stmt.setString(2, last);
+			rs = stmt.executeQuery();
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		return rs;
+	}
+	
+	public ResultSet phoneQuery(String phone) {
+		ResultSet rs = null;
+		try
+		{
+			stmt = conn.prepareStatement("select idCustomer, First, Last, Street, City, State, Zip, isClubMember from customer_data, customer_data_has_phone, phone where customer_data.idCustomer = customer_data_has_phone.CUSTOMER_DATA_idCustomer && customer_data_has_phone.PHONE_idPhone = phone.idPhone && phone.phoneNum = ?");
+			stmt.setString(1, phone);
+			rs = stmt.executeQuery();
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return rs;
+	}
+	
+	
+	
+	
 	public JPanel buildNamePanel() {
 		JPanel p = new JPanel();
 		p.setLayout(new GridLayout(3, 1));
